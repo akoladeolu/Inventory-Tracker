@@ -11,7 +11,7 @@ export function useLogout() {
   const logout = useCallback(async () => {
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: "global" });
 
       if (error) {
         toast.error(error.message);
@@ -20,7 +20,9 @@ export function useLogout() {
 
       toast.success("Logged out successfully");
       router.push("/login");
-    } catch {
+      router.refresh();
+    } catch (err) {
+      console.error("[useLogout] Unexpected error:", err);
       toast.error("An unexpected error occurred");
     }
   }, [router]);

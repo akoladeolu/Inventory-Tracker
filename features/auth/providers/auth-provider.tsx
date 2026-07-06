@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -32,26 +32,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     const supabase = createClient();
 
     const getUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+          console.error("[AuthProvider] Error fetching user:", error.message);
+        }
         setUser(user);
 
         if (user) {
-          const { data } = await supabase
+          const { data, error: profileError } = await supabase
             .from("users")
             .select("*")
             .eq("auth_id", user.id)
             .single();
+          if (profileError) {
+            console.error("[AuthProvider] Error fetching profile:", profileError.message);
+          }
           setProfile(data);
+        } else {
+          setProfile(null);
         }
-      } catch {
-        // Error fetching user
+      } catch (err) {
+        console.error("[AuthProvider] Unexpected error:", err);
       } finally {
         setLoading(false);
       }
@@ -64,11 +71,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from("users")
             .select("*")
             .eq("auth_id", session.user.id)
             .single();
+          if (error) {
+            console.error("[AuthProvider] Error fetching profile on auth change:", error.message);
+          }
           setProfile(data);
         } else {
           setProfile(null);
@@ -79,16 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === "SIGNED_IN") {
           router.refresh();
         }
-        if (event === "SIGNED_OUT") {
-          router.push("/login");
-        }
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [router, pathname]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>

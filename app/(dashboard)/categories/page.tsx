@@ -21,10 +21,14 @@ export default function CategoriesPage() {
 
   const fetchCategories = useCallback(async () => {
     const supabase = createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("categories")
       .select("*")
       .order("name", { ascending: true });
+
+    if (error) {
+      console.error("Categories fetch error:", error.message);
+    }
 
     setCategories(data || []);
     setLoading(false);

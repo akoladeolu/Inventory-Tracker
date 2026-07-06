@@ -1,123 +1,81 @@
--- Enable RLS on all tables
+-- Enable Row Level Security on all tables
+-- Run this in Supabase Dashboard > SQL Editor
+
+-- 1. USERS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "users_select" ON users;
+CREATE POLICY "users_select" ON users
+  FOR SELECT USING (auth.uid() = auth_id OR auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "users_insert" ON users;
+CREATE POLICY "users_insert" ON users
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "users_update" ON users;
+CREATE POLICY "users_update" ON users
+  FOR UPDATE USING (auth.uid() = auth_id OR auth.role() = 'authenticated');
+
+-- 2. CATEGORIES
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "categories_all" ON categories;
+CREATE POLICY "categories_all" ON categories
+  FOR ALL USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- 3. PRODUCTS
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "products_all" ON products;
+CREATE POLICY "products_all" ON products
+  FOR ALL USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- 4. SUPPLIERS
 ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "suppliers_all" ON suppliers;
+CREATE POLICY "suppliers_all" ON suppliers
+  FOR ALL USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- 5. INVENTORY
 ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "inventory_all" ON inventory;
+CREATE POLICY "inventory_all" ON inventory
+  FOR ALL USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- 6. STOCK_MOVEMENTS
 ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "stock_movements_all" ON stock_movements;
+CREATE POLICY "stock_movements_all" ON stock_movements
+  FOR ALL USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- 7. SALES
 ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "sales_all" ON sales;
+CREATE POLICY "sales_all" ON sales
+  FOR ALL USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- 8. SALE_ITEMS
 ALTER TABLE sale_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "sale_items_all" ON sale_items;
+CREATE POLICY "sale_items_all" ON sale_items
+  FOR ALL USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- 9. CUSTOMERS
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 
--- Users: read own profile, owners/managers read all
-CREATE POLICY "Users can read own profile" ON users
-  FOR SELECT USING (auth_id = auth.uid());
-
-CREATE POLICY "Owners can read all users" ON users
-  FOR SELECT USING (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'owner')
-  );
-
-CREATE POLICY "Owners can update users" ON users
-  FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'owner')
-  );
-
--- Categories: all authenticated users can read, owners/managers can write
-CREATE POLICY "Authenticated users can read categories" ON categories
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Owners and managers can insert categories" ON categories
-  FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('owner', 'manager'))
-  );
-
-CREATE POLICY "Owners and managers can update categories" ON categories
-  FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('owner', 'manager'))
-  );
-
-CREATE POLICY "Owners and managers can delete categories" ON categories
-  FOR DELETE USING (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('owner', 'manager'))
-  );
-
--- Products: all authenticated users can read, owners/managers can write
-CREATE POLICY "Authenticated users can read products" ON products
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Owners and managers can insert products" ON products
-  FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('owner', 'manager'))
-  );
-
-CREATE POLICY "Owners and managers can update products" ON products
-  FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('owner', 'manager'))
-  );
-
-CREATE POLICY "Owners can delete products" ON products
-  FOR DELETE USING (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'owner')
-  );
-
--- Suppliers: all authenticated users can read, owners/managers can write
-CREATE POLICY "Authenticated users can read suppliers" ON suppliers
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Owners and managers can insert suppliers" ON suppliers
-  FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('owner', 'manager'))
-  );
-
-CREATE POLICY "Owners and managers can update suppliers" ON suppliers
-  FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('owner', 'manager'))
-  );
-
-CREATE POLICY "Owners and managers can delete suppliers" ON suppliers
-  FOR DELETE USING (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('owner', 'manager'))
-  );
-
--- Inventory: all authenticated users can read, owners/managers can write
-CREATE POLICY "Authenticated users can read inventory" ON inventory
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Owners and managers can insert inventory" ON inventory
-  FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('owner', 'manager'))
-  );
-
-CREATE POLICY "Owners and managers can update inventory" ON inventory
-  FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('owner', 'manager'))
-  );
-
--- Stock Movements: all authenticated users can read, all can insert
-CREATE POLICY "Authenticated users can read stock movements" ON stock_movements
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Authenticated users can insert stock movements" ON stock_movements
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
--- Sales: all authenticated users can read and insert
-CREATE POLICY "Authenticated users can read sales" ON sales
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Authenticated users can insert sales" ON sales
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
--- Sale Items: all authenticated users can read and insert
-CREATE POLICY "Authenticated users can read sale items" ON sale_items
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Authenticated users can insert sale items" ON sale_items
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
--- Customers: all authenticated users can read and insert
-CREATE POLICY "Authenticated users can read customers" ON customers
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Authenticated users can insert customers" ON customers
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "customers_all" ON customers;
+CREATE POLICY "customers_all" ON customers
+  FOR ALL USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
