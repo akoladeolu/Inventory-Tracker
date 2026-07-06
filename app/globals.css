@@ -36,6 +36,21 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Brand Colors */
+  --color-gold: #C8A348;
+  --color-gold-hover: #B8933A;
+  --color-charcoal: #1E1E1E;
+  --color-soft-black: #2D2D2D;
+  --color-deep-red: #A52A2A;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-success: #16A34A;
+  --color-warning: #F59E0B;
+  --color-error: #DC2626;
+  --color-info: #2563EB;
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -49,6 +64,9 @@
 
 :root {
   --radius: 0.625rem;
+
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-bricolage);
 
   --background: #F8F9FA;
   --foreground: #111827;
