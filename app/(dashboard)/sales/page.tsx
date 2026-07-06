@@ -26,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { createSaleAction } from "@/features/sales/actions/create-sale";
+import { PermissionGate } from "@/components/shared/permission-gate";
 
 interface Product {
   id: string;
@@ -105,9 +106,7 @@ export default function SalesPage() {
       return;
     }
 
-    const existingIndex = items.findIndex(
-      (i) => i.product_id === product.id
-    );
+    const existingIndex = items.findIndex((i) => i.product_id === product.id);
 
     if (existingIndex >= 0) {
       const newItems = [...items];
@@ -186,10 +185,12 @@ export default function SalesPage() {
           <h1 className="text-2xl font-bold text-charcoal">Sales</h1>
           <p className="text-text-secondary">Record and manage sales</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Sale
-        </Button>
+        <PermissionGate permission="sales:write">
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Sale
+          </Button>
+        </PermissionGate>
       </div>
 
       {/* Sales List */}
@@ -203,13 +204,13 @@ export default function SalesPage() {
         <div className="rounded-lg border border-border bg-surface py-12 text-center">
           <ShoppingCart className="mx-auto h-12 w-12 text-text-secondary" />
           <h3 className="mt-4 text-lg font-medium">No sales yet</h3>
-          <p className="mt-2 text-text-secondary">
-            Record your first sale to get started.
-          </p>
-          <Button className="mt-4" onClick={() => setIsFormOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Sale
-          </Button>
+          <p className="mt-2 text-text-secondary">Record your first sale to get started.</p>
+          <PermissionGate permission="sales:write">
+            <Button className="mt-4" onClick={() => setIsFormOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Sale
+            </Button>
+          </PermissionGate>
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-surface">
@@ -231,9 +232,7 @@ export default function SalesPage() {
               <span className="text-sm text-text-secondary">
                 {new Date(sale.created_at).toLocaleDateString()}
               </span>
-              <span className="font-medium text-success">
-                ${Number(sale.total).toFixed(2)}
-              </span>
+              <span className="font-medium text-success">${Number(sale.total).toFixed(2)}</span>
               <Badge variant="outline" className="w-fit capitalize">
                 {sale.payment_method}
               </Badge>
@@ -326,9 +325,7 @@ export default function SalesPage() {
                     <span className="text-sm">{item.product_name}</span>
                     <span className="text-sm">${item.unit_price.toFixed(2)}</span>
                     <span className="text-sm">{item.quantity}</span>
-                    <span className="text-sm font-medium">
-                      ${item.total.toFixed(2)}
-                    </span>
+                    <span className="text-sm font-medium">${item.total.toFixed(2)}</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -382,11 +379,7 @@ export default function SalesPage() {
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsFormOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting || items.length === 0}>

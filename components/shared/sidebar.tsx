@@ -14,16 +14,17 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/features/auth/hooks/use-permissions";
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Products", href: "/products", icon: Package },
-  { name: "Categories", href: "/categories", icon: Tags },
-  { name: "Inventory", href: "/inventory", icon: Warehouse },
-  { name: "Sales", href: "/sales", icon: ShoppingCart },
-  { name: "Suppliers", href: "/suppliers", icon: Truck },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "products:read" },
+  { name: "Products", href: "/products", icon: Package, permission: "products:read" },
+  { name: "Categories", href: "/categories", icon: Tags, permission: "categories:read" },
+  { name: "Inventory", href: "/inventory", icon: Warehouse, permission: "inventory:read" },
+  { name: "Sales", href: "/sales", icon: ShoppingCart, permission: "sales:read" },
+  { name: "Suppliers", href: "/suppliers", icon: Truck, permission: "suppliers:read" },
+  { name: "Reports", href: "/reports", icon: BarChart3, permission: "reports:read" },
+  { name: "Settings", href: "/settings", icon: Settings, permission: "settings:read" },
 ];
 
 interface SidebarProps {
@@ -33,6 +34,7 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const { checkPermission } = usePermissions();
 
   return (
     <aside
@@ -52,32 +54,32 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           onClick={onToggle}
           className="rounded-lg p-2 text-gray-400 hover:bg-soft-black hover:text-white"
         >
-          <ChevronLeft
-            className={cn("h-5 w-5 transition-transform", collapsed && "rotate-180")}
-          />
+          <ChevronLeft className={cn("h-5 w-5 transition-transform", collapsed && "rotate-180")} />
         </button>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {navigation.map((item) => {
-          const isActive = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-gold/10 text-gold"
-                  : "text-gray-400 hover:bg-soft-black hover:text-white"
-              )}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>{item.name}</span>}
-            </Link>
-          );
-        })}
+        {navigation
+          .filter((item) => checkPermission(item.permission))
+          .map((item) => {
+            const isActive = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-gold/10 text-gold"
+                    : "text-gray-400 hover:bg-soft-black hover:text-white"
+                )}
+              >
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                {!collapsed && <span>{item.name}</span>}
+              </Link>
+            );
+          })}
       </nav>
 
       {/* Footer */}

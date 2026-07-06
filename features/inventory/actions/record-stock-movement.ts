@@ -1,7 +1,7 @@
 "use server";
 
 import { recordStockMovement } from "@/features/inventory/services/inventory.service";
-import { getUserProfile } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth/server-permissions";
 
 interface StockMovementActionInput {
   product_id: string;
@@ -11,10 +11,7 @@ interface StockMovementActionInput {
 }
 
 export async function recordStockMovementAction(input: StockMovementActionInput) {
-  const profile = await getUserProfile();
-  if (!profile) {
-    throw new Error("Not authenticated");
-  }
+  const profile = await requirePermission("stock_movements:write");
 
   const movement = await recordStockMovement({
     ...input,

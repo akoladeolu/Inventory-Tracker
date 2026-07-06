@@ -19,8 +19,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { createClient } from "@/lib/supabase/client";
 import { CategoryForm } from "./category-form";
+import { deleteCategoryAction } from "@/features/categories/actions/category-actions";
+import { PermissionGate } from "@/components/shared/permission-gate";
 
 interface Category {
   id: string;
@@ -44,14 +45,7 @@ export function CategoriesTable({ categories, onRefresh }: CategoriesTableProps)
     setIsDeleting(true);
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("categories")
-        .delete()
-        .eq("id", deletingCategory.id);
-
-      if (error) throw error;
-
+      await deleteCategoryAction(deletingCategory.id);
       toast.success("Category deleted successfully");
       setDeletingCategory(null);
       onRefresh();
@@ -87,24 +81,28 @@ export function CategoriesTable({ categories, onRefresh }: CategoriesTableProps)
             <span className="text-sm text-text-secondary">
               {new Date(category.created_at).toLocaleDateString()}
             </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted">
-                <MoreHorizontal className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setEditingCategory(category)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setDeletingCategory(category)}
-                  className="text-error"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <PermissionGate permission="categories:write">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted">
+                  <MoreHorizontal className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setEditingCategory(category)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <PermissionGate permission="categories:delete">
+                    <DropdownMenuItem
+                      onClick={() => setDeletingCategory(category)}
+                      className="text-error"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </PermissionGate>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </PermissionGate>
           </div>
         ))}
       </div>

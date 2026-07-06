@@ -99,15 +99,37 @@ export default function ReportsPage() {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         sevenDaysAgo.setHours(0, 0, 0, 0);
 
-        const [todayResult, weekResult, monthResult, totalResult, allSalesResult, lowStockResult, saleItemsResult, productsResult] = await Promise.all([
+        const [
+          todayResult,
+          weekResult,
+          monthResult,
+          totalResult,
+          allSalesResult,
+          lowStockResult,
+          saleItemsResult,
+          productsResult,
+        ] = await Promise.all([
           supabase.from("sales").select("total").gte("created_at", today.toISOString()),
           supabase.from("sales").select("total").gte("created_at", weekStart.toISOString()),
           supabase.from("sales").select("total").gte("created_at", monthStart.toISOString()),
           supabase.from("sales").select("*", { count: "exact", head: true }),
-          supabase.from("sales").select("total, created_at").gte("created_at", sevenDaysAgo.toISOString()),
-          supabase.from("products").select("id, name, sku, quantity, low_stock_threshold").eq("status", "active").order("quantity", { ascending: true }),
-          supabase.from("sale_items").select("product_id, quantity, total, products(name)").limit(1000),
-          supabase.from("products").select("id, quantity, cost_price, categories(name)").eq("status", "active"),
+          supabase
+            .from("sales")
+            .select("total, created_at")
+            .gte("created_at", sevenDaysAgo.toISOString()),
+          supabase
+            .from("products")
+            .select("id, name, sku, quantity, low_stock_threshold")
+            .eq("status", "active")
+            .order("quantity", { ascending: true }),
+          supabase
+            .from("sale_items")
+            .select("product_id, quantity, total, products(name)")
+            .limit(1000),
+          supabase
+            .from("products")
+            .select("id, quantity, cost_price, categories(name)")
+            .eq("status", "active"),
         ]);
 
         setSalesSummary({
@@ -139,11 +161,16 @@ export default function ReportsPage() {
         );
 
         if (saleItemsResult.data) {
-          const productSales: Record<string, { name: string; totalSold: number; revenue: number }> = {};
+          const productSales: Record<string, { name: string; totalSold: number; revenue: number }> =
+            {};
           saleItemsResult.data.forEach((item) => {
             const key = item.product_id;
             if (!productSales[key]) {
-              productSales[key] = { name: (item.products as any)?.name || "Unknown", totalSold: 0, revenue: 0 };
+              productSales[key] = {
+                name: (item.products as any)?.name || "Unknown",
+                totalSold: 0,
+                revenue: 0,
+              };
             }
             productSales[key].totalSold += item.quantity;
             productSales[key].revenue += Number(item.total);
@@ -173,8 +200,8 @@ export default function ReportsPage() {
             categoryBreakdown: Object.values(categoryMap),
           });
         }
-      } catch {
-        // Errors handled silently — data stays at defaults
+      } catch (error) {
+        console.error("[ReportsPage] Failed to load report data:", error);
       } finally {
         setLoading(false);
       }
@@ -341,9 +368,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold text-error">
-                      {inventorySummary.outOfStock}
-                    </p>
+                    <p className="text-2xl font-bold text-error">{inventorySummary.outOfStock}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -478,12 +503,7 @@ export default function ReportsPage() {
                       <BarChart data={bestSelling} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                         <XAxis type="number" className="text-xs" />
-                        <YAxis
-                          dataKey="name"
-                          type="category"
-                          width={120}
-                          className="text-xs"
-                        />
+                        <YAxis dataKey="name" type="category" width={120} className="text-xs" />
                         <Tooltip
                           formatter={(value) => `$${Number(value).toFixed(2)}`}
                           contentStyle={{
@@ -492,7 +512,12 @@ export default function ReportsPage() {
                             borderRadius: "8px",
                           }}
                         />
-                        <Bar dataKey="revenue" fill="#f59e0b" name="Revenue" radius={[0, 4, 4, 0]} />
+                        <Bar
+                          dataKey="revenue"
+                          fill="#f59e0b"
+                          name="Revenue"
+                          radius={[0, 4, 4, 0]}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CategoryForm } from "@/features/categories/components/category-form";
 import { CategoriesTable } from "@/features/categories/components/categories-table";
 import { createClient } from "@/lib/supabase/client";
+import { PermissionGate } from "@/components/shared/permission-gate";
 
 interface Category {
   id: string;
@@ -43,14 +44,14 @@ export default function CategoriesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-charcoal">Categories</h1>
-          <p className="text-text-secondary">
-            Manage your product categories
-          </p>
+          <p className="text-text-secondary">Manage your product categories</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Category
-        </Button>
+        <PermissionGate permission="categories:write">
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Category
+          </Button>
+        </PermissionGate>
       </div>
 
       {loading ? (

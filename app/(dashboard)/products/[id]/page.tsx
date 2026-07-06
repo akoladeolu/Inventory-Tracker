@@ -18,6 +18,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
+import {
+  archiveProductAction,
+  deleteProductAction,
+} from "@/features/products/actions/product-actions";
+import { PermissionGate } from "@/components/shared/permission-gate";
 
 interface Product {
   id: string;
@@ -66,16 +71,18 @@ export default function ProductDetailPage() {
 
     const { data: movementsData } = await supabase
       .from("stock_movements")
-      .select(`
+      .select(
+        `
         *,
         users (name)
-      `)
+      `
+      )
       .eq("product_id", params.id)
       .order("created_at", { ascending: false })
       .limit(10);
 
     setProduct(productData);
-    setMovements(movementsData as any || []);
+    setMovements((movementsData as any) || []);
     setLoading(false);
   }, [params.id]);
 
@@ -89,14 +96,7 @@ export default function ProductDetailPage() {
     setIsArchiving(true);
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("products")
-        .update({ status: "archived", updated_at: new Date().toISOString() })
-        .eq("id", product.id);
-
-      if (error) throw error;
-
+      await archiveProductAction(product.id);
       toast.success("Product archived");
       fetchProduct();
     } catch (error: any) {
@@ -110,14 +110,7 @@ export default function ProductDetailPage() {
     if (!product) return;
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("products")
-        .delete()
-        .eq("id", product.id);
-
-      if (error) throw error;
-
+      await deleteProductAction(product.id);
       toast.success("Product deleted");
       router.push("/products");
     } catch (error: any) {
@@ -156,28 +149,25 @@ export default function ProductDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/products")}
-          className="gap-2"
-        >
+        <Button variant="ghost" onClick={() => router.push("/products")} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back to Products
         </Button>
         <div className="flex gap-2">
           {product.status === "active" && (
-            <Button variant="outline" onClick={handleArchive} disabled={isArchiving}>
-              <Archive className="mr-2 h-4 w-4" />
-              Archive
-            </Button>
+            <PermissionGate permission="products:write">
+              <Button variant="outline" onClick={handleArchive} disabled={isArchiving}>
+                <Archive className="mr-2 h-4 w-4" />
+                Archive
+              </Button>
+            </PermissionGate>
           )}
-          <Button
-            variant="destructive"
-            onClick={() => setIsDeleteDialogOpen(true)}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </Button>
+          <PermissionGate permission="products:delete">
+            <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </PermissionGate>
         </div>
       </div>
 
@@ -200,23 +190,15 @@ export default function ProductDetailPage() {
               <div className="flex-1">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h1 className="text-2xl font-bold text-charcoal">
-                      {product.name}
-                    </h1>
+                    <h1 className="text-2xl font-bold text-charcoal">{product.name}</h1>
                     <p className="text-text-secondary">{product.sku}</p>
                   </div>
-                  <Badge
-                    variant={
-                      product.status === "active" ? "default" : "secondary"
-                    }
-                  >
+                  <Badge variant={product.status === "active" ? "default" : "secondary"}>
                     {product.status}
                   </Badge>
                 </div>
                 {product.brand && (
-                  <p className="mt-2 text-sm text-text-secondary">
-                    Brand: {product.brand}
-                  </p>
+                  <p className="mt-2 text-sm text-text-secondary">Brand: {product.brand}</p>
                 )}
               </div>
             </CardHeader>
@@ -224,21 +206,15 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <div>
                   <p className="text-sm text-text-secondary">Category</p>
-                  <p className="font-medium">
-                    {product.categories?.name || "—"}
-                  </p>
+                  <p className="font-medium">{product.categories?.name || "—"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-text-secondary">Cost Price</p>
-                  <p className="font-medium">
-                    ${Number(product.cost_price).toFixed(2)}
-                  </p>
+                  <p className="font-medium">${Number(product.cost_price).toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-text-secondary">Selling Price</p>
-                  <p className="font-medium">
-                    ${Number(product.selling_price).toFixed(2)}
-                  </p>
+                  <p className="font-medium">${Number(product.selling_price).toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-text-secondary">Margin</p>
@@ -276,29 +252,27 @@ export default function ProductDetailPage() {
                     product.quantity === 0
                       ? "text-error"
                       : product.quantity <= product.low_stock_threshold
-                      ? "text-warning"
-                      : "text-success"
+                        ? "text-warning"
+                        : "text-success"
                   }`}
                 >
                   {product.quantity}
                 </p>
-                <p className="mt-2 text-text-secondary">
-                  Threshold: {product.low_stock_threshold}
-                </p>
+                <p className="mt-2 text-text-secondary">Threshold: {product.low_stock_threshold}</p>
                 <Badge
                   className={`mt-4 ${
                     product.quantity === 0
                       ? "bg-error/10 text-error"
                       : product.quantity <= product.low_stock_threshold
-                      ? "bg-warning/10 text-warning"
-                      : "bg-success/10 text-success"
+                        ? "bg-warning/10 text-warning"
+                        : "bg-success/10 text-success"
                   }`}
                 >
                   {product.quantity === 0
                     ? "Out of Stock"
                     : product.quantity <= product.low_stock_threshold
-                    ? "Low Stock"
-                    : "In Stock"}
+                      ? "Low Stock"
+                      : "In Stock"}
                 </Badge>
               </div>
             </CardContent>
@@ -311,23 +285,15 @@ export default function ProductDetailPage() {
             </CardHeader>
             <CardContent>
               {movements.length === 0 ? (
-                <p className="py-4 text-center text-text-secondary">
-                  No movements yet
-                </p>
+                <p className="py-4 text-center text-text-secondary">No movements yet</p>
               ) : (
                 <div className="space-y-3">
                   {movements.slice(0, 5).map((movement) => {
-                    const config =
-                      typeConfig[movement.type] || typeConfig.adjustment;
+                    const config = typeConfig[movement.type] || typeConfig.adjustment;
                     return (
-                      <div
-                        key={movement.id}
-                        className="flex items-center justify-between text-sm"
-                      >
+                      <div key={movement.id} className="flex items-center justify-between text-sm">
                         <div>
-                          <Badge className={config.className}>
-                            {config.label}
-                          </Badge>
+                          <Badge className={config.className}>{config.label}</Badge>
                           <span className="ml-2">{movement.quantity}</span>
                         </div>
                         <span className="text-text-secondary">
@@ -349,15 +315,12 @@ export default function ProductDetailPage() {
           <DialogHeader>
             <DialogTitle>Delete Product</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{product.name}&quot;? This
-              action cannot be undone.
+              Are you sure you want to delete &quot;{product.name}&quot;? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete}>

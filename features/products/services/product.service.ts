@@ -113,7 +113,7 @@ export async function createProduct(product: {
   selling_price: number;
   quantity: number;
   low_stock_threshold?: number;
-  image_url?: string;
+  image_url?: string | null;
   description?: string;
 }) {
   const profile = await getUserProfile();
@@ -168,10 +168,10 @@ export async function updateProduct(
     brand?: string;
     cost_price?: number;
     selling_price?: number;
-    low_stock_threshold?: number;
-    image_url?: string;
-    description?: string;
-    status?: string;
+  low_stock_threshold?: number;
+  image_url?: string | null;
+  description?: string;
+  status?: string;
   }
 ) {
   const updateData: Record<string, any> = {

@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { recordStockMovementAction } from "@/features/inventory/actions/record-stock-movement";
+import { PermissionGate } from "@/components/shared/permission-gate";
 
 interface Product {
   id: string;
@@ -71,16 +72,18 @@ export default function InventoryPage() {
 
     const { data: movementsData } = await supabase
       .from("stock_movements")
-      .select(`
+      .select(
+        `
         *,
         products (name, sku),
         users (name)
-      `)
+      `
+      )
       .order("created_at", { ascending: false })
       .limit(50);
 
     setProducts(productsData || []);
-    setMovements(movementsData as any || []);
+    setMovements((movementsData as any) || []);
     setLoading(false);
   }, []);
 
@@ -138,10 +141,12 @@ export default function InventoryPage() {
           <h1 className="text-2xl font-bold text-charcoal">Inventory</h1>
           <p className="text-text-secondary">Manage stock levels and movements</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Record Movement
-        </Button>
+        <PermissionGate permission="stock_movements:write">
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Record Movement
+          </Button>
+        </PermissionGate>
       </div>
 
       {/* Current Stock */}
@@ -184,8 +189,8 @@ export default function InventoryPage() {
                   product.quantity === 0
                     ? "text-error"
                     : product.quantity <= product.low_stock_threshold
-                    ? "text-warning"
-                    : ""
+                      ? "text-warning"
+                      : ""
                 }`}
               >
                 {product.quantity}
@@ -195,15 +200,15 @@ export default function InventoryPage() {
                   product.quantity === 0
                     ? "destructive"
                     : product.quantity <= product.low_stock_threshold
-                    ? "outline"
-                    : "default"
+                      ? "outline"
+                      : "default"
                 }
               >
                 {product.quantity === 0
                   ? "Out of Stock"
                   : product.quantity <= product.low_stock_threshold
-                  ? "Low Stock"
-                  : "In Stock"}
+                    ? "Low Stock"
+                    : "In Stock"}
               </Badge>
             </div>
           ))
@@ -239,9 +244,7 @@ export default function InventoryPage() {
                 <span className="text-sm">{movement.products?.name || "—"}</span>
                 <Badge className={config.className}>{config.label}</Badge>
                 <span className="text-sm font-medium">{movement.quantity}</span>
-                <span className="text-sm text-text-secondary">
-                  {movement.users?.name || "—"}
-                </span>
+                <span className="text-sm text-text-secondary">{movement.users?.name || "—"}</span>
                 <span className="text-sm text-text-secondary truncate">
                   {movement.notes || "—"}
                 </span>
@@ -289,9 +292,7 @@ export default function InventoryPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>
-                {movementType === "adjustment" ? "New Quantity" : "Quantity"}
-              </Label>
+              <Label>{movementType === "adjustment" ? "New Quantity" : "Quantity"}</Label>
               <Input
                 type="number"
                 min="0"
@@ -311,11 +312,7 @@ export default function InventoryPage() {
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsFormOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>

@@ -37,13 +37,7 @@ const permissions: Record<UserRole, string[]> = {
     "suppliers:write",
     "reports:read",
   ],
-  staff: [
-    "products:read",
-    "inventory:read",
-    "stock_movements:read",
-    "sales:read",
-    "sales:write",
-  ],
+  staff: ["products:read", "inventory:read", "stock_movements:read", "sales:read", "sales:write"],
 };
 
 export function hasPermission(role: UserRole, permission: string): boolean {

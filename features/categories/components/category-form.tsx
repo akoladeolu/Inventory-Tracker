@@ -18,7 +18,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { categorySchema, type CategoryInput } from "@/lib/validations";
-import { createClient } from "@/lib/supabase/client";
+import {
+  createCategoryAction,
+  updateCategoryAction,
+} from "@/features/categories/actions/category-actions";
 
 interface CategoryFormProps {
   open: boolean;
@@ -52,22 +55,11 @@ export function CategoryForm({
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-
       if (isEditing) {
-        const { error } = await supabase
-          .from("categories")
-          .update({ name: data.name, updated_at: new Date().toISOString() })
-          .eq("id", initialData.id);
-
-        if (error) throw error;
+        await updateCategoryAction(initialData.id, data);
         toast.success("Category updated successfully");
       } else {
-        const { error } = await supabase.from("categories").insert({
-          name: data.name,
-        });
-
-        if (error) throw error;
+        await createCategoryAction(data);
         toast.success("Category created successfully");
       }
 

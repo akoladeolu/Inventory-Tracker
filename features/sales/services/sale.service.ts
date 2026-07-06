@@ -67,7 +67,7 @@ export async function createSale(input: CreateSaleInput) {
       const [updatedProduct] = await tx
         .update(products)
         .set({
-          quantity: sql`quantity - ${item.quantity}`,
+          quantity: sql`${products.quantity} - ${item.quantity}`,
           updated_at: new Date(),
         })
         .where(
@@ -82,14 +82,17 @@ export async function createSale(input: CreateSaleInput) {
         throw new Error(`Insufficient stock for product: ${item.product_id}`);
       }
 
-      // Sync inventory table
+      // Sync inventory table, including products created before inventory rows existed.
       await tx
-        .update(inventory)
-        .set({
-          quantity: sql`quantity - ${item.quantity}`,
-          updated_at: new Date(),
+        .insert(inventory)
+        .values({
+          product_id: item.product_id,
+          quantity: updatedProduct.quantity,
         })
-        .where(eq(inventory.product_id, item.product_id));
+        .onConflictDoUpdate({
+          target: inventory.product_id,
+          set: { quantity: updatedProduct.quantity, updated_at: new Date() },
+        });
 
       // Create stock movement
       await tx.insert(stock_movements).values({

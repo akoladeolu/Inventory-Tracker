@@ -14,50 +14,74 @@ interface StockMovementInput {
 
 export async function recordStockMovement(input: StockMovementInput) {
   return await db.transaction(async (tx) => {
-    const previousQuantity = await tx
-      .select({ quantity: products.quantity })
-      .from(products)
-      .where(eq(products.id, input.product_id))
-      .then((rows) => rows[0]?.quantity ?? 0);
-
+    let previousQuantity: number;
     let newQuantity: number;
-    let guardCondition;
+    let updated: typeof products.$inferSelect | undefined;
 
     switch (input.type) {
       case "stock_in":
       case "return":
-        newQuantity = previousQuantity + input.quantity;
-        guardCondition = undefined;
+        [updated] = await tx
+          .update(products)
+          .set({
+            quantity: sql`${products.quantity} + ${input.quantity}`,
+            updated_at: new Date(),
+          })
+          .where(eq(products.id, input.product_id))
+          .returning();
+
+        if (!updated) {
+          throw new Error("Product not found");
+        }
+
+        newQuantity = updated.quantity;
+        previousQuantity = newQuantity - input.quantity;
         break;
       case "stock_out":
-        newQuantity = previousQuantity - input.quantity;
-        guardCondition = and(
-          eq(products.id, input.product_id),
-          gte(products.quantity, input.quantity)
-        );
+        [updated] = await tx
+          .update(products)
+          .set({
+            quantity: sql`${products.quantity} - ${input.quantity}`,
+            updated_at: new Date(),
+          })
+          .where(and(eq(products.id, input.product_id), gte(products.quantity, input.quantity)))
+          .returning();
+
+        if (!updated) {
+          throw new Error("Insufficient stock or product not found");
+        }
+
+        newQuantity = updated.quantity;
+        previousQuantity = newQuantity + input.quantity;
         break;
       case "adjustment":
+        previousQuantity = await tx
+          .select({ quantity: products.quantity })
+          .from(products)
+          .where(eq(products.id, input.product_id))
+          .then((rows) => rows[0]?.quantity ?? 0);
         newQuantity = input.quantity;
-        guardCondition = undefined;
+        [updated] = await tx
+          .update(products)
+          .set({ quantity: newQuantity, updated_at: new Date() })
+          .where(eq(products.id, input.product_id))
+          .returning();
+
+        if (!updated) {
+          throw new Error("Product not found");
+        }
         break;
       default:
         throw new Error("Invalid movement type");
     }
 
-    const [updated] = await tx
-      .update(products)
-      .set({ quantity: newQuantity, updated_at: new Date() })
-      .where(guardCondition ?? eq(products.id, input.product_id))
-      .returning();
-
-    if (!updated) {
-      throw new Error("Insufficient stock or product not found");
-    }
-
     await tx
-      .update(inventory)
-      .set({ quantity: newQuantity, updated_at: new Date() })
-      .where(eq(inventory.product_id, input.product_id));
+      .insert(inventory)
+      .values({ product_id: input.product_id, quantity: newQuantity })
+      .onConflictDoUpdate({
+        target: inventory.product_id,
+        set: { quantity: newQuantity, updated_at: new Date() },
+      });
 
     const [movement] = await tx
       .insert(stock_movements)
@@ -85,9 +109,7 @@ export async function getStockMovements(params?: {
   const per_page = params?.per_page || 50;
   const from = (page - 1) * per_page;
 
-  const where = params?.product_id
-    ? eq(stock_movements.product_id, params.product_id)
-    : undefined;
+  const where = params?.product_id ? eq(stock_movements.product_id, params.product_id) : undefined;
 
   const data = await db
     .select({

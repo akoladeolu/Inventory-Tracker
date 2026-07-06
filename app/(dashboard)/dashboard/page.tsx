@@ -63,11 +63,13 @@ export default function DashboardPage() {
       // Fetch recent activity
       const { data: activity } = await supabase
         .from("stock_movements")
-        .select(`
+        .select(
+          `
           *,
           products (name),
           users (name)
-        `)
+        `
+        )
         .order("created_at", { ascending: false })
         .limit(5);
 
@@ -78,11 +80,16 @@ export default function DashboardPage() {
         .from("products")
         .select("id, name, sku, quantity, low_stock_threshold, categories(name)")
         .eq("status", "active")
-        .filter("quantity", "lte", "low_stock_threshold")
         .order("quantity", { ascending: true })
-        .limit(5);
+        .limit(25);
 
-      if (lowStock) setLowStockProducts(lowStock as any);
+      if (lowStock) {
+        setLowStockProducts(
+          lowStock
+            .filter((product) => product.quantity <= product.low_stock_threshold)
+            .slice(0, 5) as any
+        );
+      }
 
       setLoading(false);
     }

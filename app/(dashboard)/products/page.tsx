@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useProducts } from "@/features/products/hooks/use-products";
 import { ProductForm } from "@/features/products/components/product-form";
 import { createClient } from "@/lib/supabase/client";
+import { PermissionGate } from "@/components/shared/permission-gate";
 
 interface Category {
   id: string;
@@ -41,10 +42,7 @@ export default function ProductsPage() {
   useEffect(() => {
     async function fetchCategories() {
       const supabase = createClient();
-      const { data } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name");
+      const { data } = await supabase.from("categories").select("*").order("name");
       setCategories(data || []);
     }
     fetchCategories();
@@ -55,14 +53,14 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-charcoal">Products</h1>
-          <p className="text-text-secondary">
-            Manage your product inventory
-          </p>
+          <p className="text-text-secondary">Manage your product inventory</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
+        <PermissionGate permission="products:write">
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        </PermissionGate>
       </div>
 
       {/* Filters */}
@@ -129,13 +127,13 @@ export default function ProductsPage() {
         <div className="rounded-lg border border-border bg-surface py-12 text-center">
           <Package className="mx-auto h-12 w-12 text-text-secondary" />
           <h3 className="mt-4 text-lg font-medium">No products found</h3>
-          <p className="mt-2 text-text-secondary">
-            Get started by adding your first product.
-          </p>
-          <Button className="mt-4" onClick={() => setIsFormOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Product
-          </Button>
+          <p className="mt-2 text-text-secondary">Get started by adding your first product.</p>
+          <PermissionGate permission="products:write">
+            <Button className="mt-4" onClick={() => setIsFormOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
+            </Button>
+          </PermissionGate>
         </div>
       ) : (
         <>
@@ -171,29 +169,21 @@ export default function ProductsPage() {
                     <p className="text-xs text-text-secondary">{product.sku}</p>
                   </div>
                 </div>
-                <span className="text-sm">
-                  {product.categories?.name || "—"}
-                </span>
-                <span className="text-sm">
-                  ${Number(product.cost_price).toFixed(2)}
-                </span>
-                <span className="text-sm">
-                  ${Number(product.selling_price).toFixed(2)}
-                </span>
+                <span className="text-sm">{product.categories?.name || "—"}</span>
+                <span className="text-sm">${Number(product.cost_price).toFixed(2)}</span>
+                <span className="text-sm">${Number(product.selling_price).toFixed(2)}</span>
                 <span
                   className={`text-sm font-medium ${
                     product.quantity === 0
                       ? "text-error"
                       : product.quantity <= product.low_stock_threshold
-                      ? "text-warning"
-                      : ""
+                        ? "text-warning"
+                        : ""
                   }`}
                 >
                   {product.quantity}
                 </span>
-                <Badge
-                  variant={product.status === "active" ? "default" : "secondary"}
-                >
+                <Badge variant={product.status === "active" ? "default" : "secondary"}>
                   {product.status}
                 </Badge>
               </Link>
@@ -204,8 +194,7 @@ export default function ProductsPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
               <p className="text-sm text-text-secondary">
-                Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, total)} of{" "}
-                {total} products
+                Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, total)} of {total} products
               </p>
               <div className="flex gap-2">
                 <Button

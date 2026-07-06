@@ -27,6 +27,10 @@ import {
 } from "@/components/ui/select";
 import { productSchema, type ProductInput } from "@/lib/validations";
 import { createClient } from "@/lib/supabase/client";
+import {
+  createProductAction,
+  updateProductAction,
+} from "@/features/products/actions/product-actions";
 
 interface Category {
   id: string;
@@ -49,9 +53,7 @@ export function ProductForm({
   onSuccess,
 }: ProductFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    initialData?.image_url || null
-  );
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image_url || null);
   const isEditing = !!initialData;
 
   const {
@@ -95,18 +97,14 @@ export function ProductForm({
     const supabase = createClient();
     const fileName = `${Date.now()}-${file.name}`;
 
-    const { data, error } = await supabase.storage
-      .from("products")
-      .upload(fileName, file);
+    const { data, error } = await supabase.storage.from("products").upload(fileName, file);
 
     if (error) {
       toast.error("Failed to upload image");
       return;
     }
 
-    const { data: urlData } = supabase.storage
-      .from("products")
-      .getPublicUrl(data.path);
+    const { data: urlData } = supabase.storage.from("products").getPublicUrl(data.path);
 
     setValue("image_url", urlData.publicUrl);
   };
@@ -115,19 +113,11 @@ export function ProductForm({
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-
       if (isEditing) {
-        const { error } = await supabase
-          .from("products")
-          .update({ ...data, updated_at: new Date().toISOString() })
-          .eq("id", initialData.id);
-
-        if (error) throw error;
+        await updateProductAction(initialData.id, data);
         toast.success("Product updated successfully");
       } else {
-        const { error } = await supabase.from("products").insert(data);
-        if (error) throw error;
+        await createProductAction(data);
         toast.success("Product created successfully");
       }
 
@@ -148,9 +138,7 @@ export function ProductForm({
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Product" : "Add Product"}</DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "Update the product details below."
-              : "Fill in the product details below."}
+            {isEditing ? "Update the product details below." : "Fill in the product details below."}
           </DialogDescription>
         </DialogHeader>
 
@@ -201,9 +189,7 @@ export function ProductForm({
                 {...register("name")}
                 className={errors.name ? "border-error" : ""}
               />
-              {errors.name && (
-                <p className="text-sm text-error">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-sm text-error">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -214,9 +200,7 @@ export function ProductForm({
                 {...register("sku")}
                 className={errors.sku ? "border-error" : ""}
               />
-              {errors.sku && (
-                <p className="text-sm text-error">{errors.sku.message}</p>
-              )}
+              {errors.sku && <p className="text-sm text-error">{errors.sku.message}</p>}
             </div>
           </div>
 
@@ -227,9 +211,7 @@ export function ProductForm({
                 defaultValue={initialData?.category_id}
                 onValueChange={(value) => setValue("category_id", value)}
               >
-                <SelectTrigger
-                  className={errors.category_id ? "border-error" : ""}
-                >
+                <SelectTrigger className={errors.category_id ? "border-error" : ""}>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -247,11 +229,7 @@ export function ProductForm({
 
             <div className="space-y-2">
               <Label htmlFor="brand">Brand</Label>
-              <Input
-                id="brand"
-                placeholder="e.g., TEEKEH"
-                {...register("brand")}
-              />
+              <Input id="brand" placeholder="e.g., TEEKEH" {...register("brand")} />
             </div>
           </div>
 
@@ -294,9 +272,7 @@ export function ProductForm({
                 {...register("quantity", { valueAsNumber: true })}
                 className={errors.quantity ? "border-error" : ""}
               />
-              {errors.quantity && (
-                <p className="text-sm text-error">{errors.quantity.message}</p>
-              )}
+              {errors.quantity && <p className="text-sm text-error">{errors.quantity.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -319,11 +295,7 @@ export function ProductForm({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>

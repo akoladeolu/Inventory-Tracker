@@ -1,7 +1,7 @@
 "use server";
 
 import { createSale } from "@/features/sales/services/sale.service";
-import { getUserProfile } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth/server-permissions";
 
 interface SaleItemInput {
   product_id: string;
@@ -21,10 +21,7 @@ interface CreateSaleActionInput {
 }
 
 export async function createSaleAction(input: CreateSaleActionInput) {
-  const profile = await getUserProfile();
-  if (!profile) {
-    throw new Error("Not authenticated");
-  }
+  const profile = await requirePermission("sales:write");
 
   const sale = await createSale({
     ...input,

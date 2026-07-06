@@ -26,6 +26,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supplierSchema, type SupplierInput } from "@/lib/validations";
 import { createClient } from "@/lib/supabase/client";
+import {
+  createSupplierAction,
+  deleteSupplierAction,
+  updateSupplierAction,
+} from "@/features/suppliers/actions/supplier-actions";
+import { PermissionGate } from "@/components/shared/permission-gate";
 
 interface Supplier {
   id: string;
@@ -89,18 +95,11 @@ export default function SuppliersPage() {
     setIsSubmitting(true);
 
     try {
-      const supabase = createClient();
-
       if (editingSupplier) {
-        const { error } = await supabase
-          .from("suppliers")
-          .update({ ...data, updated_at: new Date().toISOString() })
-          .eq("id", editingSupplier.id);
-        if (error) throw error;
+        await updateSupplierAction(editingSupplier.id, data);
         toast.success("Supplier updated successfully");
       } else {
-        const { error } = await supabase.from("suppliers").insert(data);
-        if (error) throw error;
+        await createSupplierAction(data);
         toast.success("Supplier created successfully");
       }
 
@@ -117,12 +116,7 @@ export default function SuppliersPage() {
     if (!deletingSupplier) return;
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("suppliers")
-        .delete()
-        .eq("id", deletingSupplier.id);
-      if (error) throw error;
+      await deleteSupplierAction(deletingSupplier.id);
       toast.success("Supplier deleted successfully");
       setDeletingSupplier(null);
       fetchSuppliers();
@@ -138,10 +132,12 @@ export default function SuppliersPage() {
           <h1 className="text-2xl font-bold text-charcoal">Suppliers</h1>
           <p className="text-text-secondary">Manage your suppliers</p>
         </div>
-        <Button onClick={openCreateForm}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Supplier
-        </Button>
+        <PermissionGate permission="suppliers:write">
+          <Button onClick={openCreateForm}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Supplier
+          </Button>
+        </PermissionGate>
       </div>
 
       {loading ? (
@@ -154,13 +150,13 @@ export default function SuppliersPage() {
         <div className="rounded-lg border border-border bg-surface py-12 text-center">
           <Truck className="mx-auto h-12 w-12 text-text-secondary" />
           <h3 className="mt-4 text-lg font-medium">No suppliers found</h3>
-          <p className="mt-2 text-text-secondary">
-            Add your first supplier to get started.
-          </p>
-          <Button className="mt-4" onClick={openCreateForm}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Supplier
-          </Button>
+          <p className="mt-2 text-text-secondary">Add your first supplier to get started.</p>
+          <PermissionGate permission="suppliers:write">
+            <Button className="mt-4" onClick={openCreateForm}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Supplier
+            </Button>
+          </PermissionGate>
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-surface">
@@ -180,24 +176,26 @@ export default function SuppliersPage() {
               <span className="text-sm">{supplier.contact_person || "—"}</span>
               <span className="text-sm">{supplier.email || "—"}</span>
               <span className="text-sm">{supplier.phone || "—"}</span>
+              <PermissionGate permission="suppliers:write">
                 <DropdownMenu>
                   <DropdownMenuTrigger className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted">
                     <MoreHorizontal className="h-4 w-4" />
                   </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => openEditForm(supplier)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setDeletingSupplier(supplier)}
-                    className="text-error"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => openEditForm(supplier)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setDeletingSupplier(supplier)}
+                      className="text-error"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </PermissionGate>
             </div>
           ))}
         </div>
@@ -207,9 +205,7 @@ export default function SuppliersPage() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>
-              {editingSupplier ? "Edit Supplier" : "Add Supplier"}
-            </DialogTitle>
+            <DialogTitle>{editingSupplier ? "Edit Supplier" : "Add Supplier"}</DialogTitle>
             <DialogDescription>
               {editingSupplier
                 ? "Update the supplier details below."
@@ -226,18 +222,12 @@ export default function SuppliersPage() {
                 {...register("name")}
                 className={errors.name ? "border-error" : ""}
               />
-              {errors.name && (
-                <p className="text-sm text-error">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-sm text-error">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="contact_person">Contact Person</Label>
-              <Input
-                id="contact_person"
-                placeholder="John Doe"
-                {...register("contact_person")}
-              />
+              <Input id="contact_person" placeholder="John Doe" {...register("contact_person")} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -252,29 +242,17 @@ export default function SuppliersPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  placeholder="+1 234 567 890"
-                  {...register("phone")}
-                />
+                <Input id="phone" placeholder="+1 234 567 890" {...register("phone")} />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
-              <Textarea
-                id="address"
-                placeholder="Full address..."
-                {...register("address")}
-              />
+              <Textarea id="address" placeholder="Full address..." {...register("address")} />
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsFormOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
@@ -286,23 +264,17 @@ export default function SuppliersPage() {
       </Dialog>
 
       {/* Delete Dialog */}
-      <Dialog
-        open={!!deletingSupplier}
-        onOpenChange={(open) => !open && setDeletingSupplier(null)}
-      >
+      <Dialog open={!!deletingSupplier} onOpenChange={(open) => !open && setDeletingSupplier(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Supplier</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{deletingSupplier?.name}&quot;?
-              This action cannot be undone.
+              Are you sure you want to delete &quot;{deletingSupplier?.name}&quot;? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeletingSupplier(null)}
-            >
+            <Button variant="outline" onClick={() => setDeletingSupplier(null)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
