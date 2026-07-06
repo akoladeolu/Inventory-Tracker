@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
+import { createSaleAction } from "@/features/sales/actions/create-sale";
 
 interface Product {
   id: string;
@@ -148,83 +149,20 @@ export default function SalesPage() {
     setIsSubmitting(true);
 
     try {
-      const supabase = createClient();
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { data: userProfile } = await supabase
-        .from("users")
-        .select("id")
-        .eq("auth_id", user.id)
-        .single();
-
-      if (!userProfile) throw new Error("User profile not found");
-
-      // Generate invoice number
-      const invoiceNumber = `INV-${Date.now()}`;
-
-      // Create sale
-      const { data: sale, error: saleError } = await supabase
-        .from("sales")
-        .insert({
-          invoice_number: invoiceNumber,
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          subtotal: subtotal,
-          discount: parseFloat(discount || "0"),
-          total: total,
-          payment_method: paymentMethod,
-          user_id: userProfile.id,
-        })
-        .select()
-        .single();
-
-      if (saleError) throw saleError;
-
-      // Create sale items and update stock
-      for (const item of items) {
-        // Create sale item
-        await supabase.from("sale_items").insert({
-          sale_id: sale.id,
+      await createSaleAction({
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        subtotal,
+        discount: parseFloat(discount || "0"),
+        total,
+        payment_method: paymentMethod as "cash" | "card" | "transfer" | "mobile",
+        items: items.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,
           unit_price: item.unit_price,
           total: item.total,
-        });
-
-        // Get current product quantity
-        const { data: product } = await supabase
-          .from("products")
-          .select("quantity")
-          .eq("id", item.product_id)
-          .single();
-
-        if (product) {
-          const newQuantity = product.quantity - item.quantity;
-
-          // Update product quantity
-          await supabase
-            .from("products")
-            .update({
-              quantity: newQuantity,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", item.product_id);
-
-          // Create stock movement
-          await supabase.from("stock_movements").insert({
-            product_id: item.product_id,
-            type: "sale",
-            quantity: item.quantity,
-            previous_quantity: product.quantity,
-            new_quantity: newQuantity,
-            user_id: userProfile.id,
-            notes: `Sale ${invoiceNumber}`,
-          });
-        }
-      }
+        })),
+      });
 
       toast.success("Sale completed successfully");
       setIsFormOpen(false);

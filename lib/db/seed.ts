@@ -1,3 +1,6 @@
+import { config } from "dotenv";
+import { resolve } from "path";
+config({ path: resolve(process.cwd(), ".env.local") });
 import { db } from "./index";
 import { categories } from "./schema";
 import { DEFAULT_CATEGORIES } from "@/constants";

@@ -1,5 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { db } from "@/lib/db";
+import { products, categories, inventory, stock_movements } from "@/lib/db/schema";
+import { eq, sql, and, ilike, or } from "drizzle-orm";
+import { getUserProfile } from "@/lib/auth";
 
 export async function getProducts(params?: {
   search?: string;
@@ -8,53 +10,97 @@ export async function getProducts(params?: {
   page?: number;
   per_page?: number;
 }) {
-  const supabase = await createClient();
   const page = params?.page || 1;
   const per_page = params?.per_page || 20;
   const from = (page - 1) * per_page;
-  const to = from + per_page - 1;
 
-  let query = supabase
-    .from("products")
-    .select("*, categories(name)", { count: "exact" });
+  let conditions = [];
 
   if (params?.search) {
-    query = query.or(`name.ilike.%${params.search}%,sku.ilike.%${params.search}%`);
+    conditions.push(
+      or(
+        ilike(products.name, `%${params.search}%`),
+        ilike(products.sku, `%${params.search}%`)
+      )
+    );
   }
 
   if (params?.category_id) {
-    query = query.eq("category_id", params.category_id);
+    conditions.push(eq(products.category_id, params.category_id));
   }
 
   if (params?.status) {
-    query = query.eq("status", params.status);
+    conditions.push(eq(products.status, params.status as "active" | "archived"));
   }
 
-  query = query.order("created_at", { ascending: false }).range(from, to);
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const { data, error, count } = await query;
+  const data = await db
+    .select({
+      id: products.id,
+      name: products.name,
+      sku: products.sku,
+      category_id: products.category_id,
+      brand: products.brand,
+      cost_price: products.cost_price,
+      selling_price: products.selling_price,
+      quantity: products.quantity,
+      low_stock_threshold: products.low_stock_threshold,
+      image_url: products.image_url,
+      description: products.description,
+      status: products.status,
+      created_at: products.created_at,
+      updated_at: products.updated_at,
+      categories: {
+        name: categories.name,
+      },
+    })
+    .from(products)
+    .leftJoin(categories, eq(products.category_id, categories.id))
+    .where(where)
+    .orderBy(sql`${products.created_at} DESC`)
+    .limit(per_page)
+    .offset(from);
 
-  if (error) throw error;
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(products)
+    .where(where);
 
   return {
-    products: data || [],
-    total: count || 0,
+    products: data,
+    total: count,
     page,
     per_page,
-    totalPages: Math.ceil((count || 0) / per_page),
+    totalPages: Math.ceil(count / per_page),
   };
 }
 
 export async function getProduct(id: string) {
-  const supabase = await createClient();
+  const [data] = await db
+    .select({
+      id: products.id,
+      name: products.name,
+      sku: products.sku,
+      category_id: products.category_id,
+      brand: products.brand,
+      cost_price: products.cost_price,
+      selling_price: products.selling_price,
+      quantity: products.quantity,
+      low_stock_threshold: products.low_stock_threshold,
+      image_url: products.image_url,
+      description: products.description,
+      status: products.status,
+      created_at: products.created_at,
+      updated_at: products.updated_at,
+      categories: {
+        name: categories.name,
+      },
+    })
+    .from(products)
+    .leftJoin(categories, eq(products.category_id, categories.id))
+    .where(eq(products.id, id));
 
-  const { data, error } = await supabase
-    .from("products")
-    .select("*, categories(name)")
-    .eq("id", id)
-    .single();
-
-  if (error) throw error;
   return data;
 }
 
@@ -70,48 +116,47 @@ export async function createProduct(product: {
   image_url?: string;
   description?: string;
 }) {
-  const supabase = await createClient();
+  const profile = await getUserProfile();
 
-  const { data, error } = await supabase
-    .from("products")
-    .insert(product)
-    .select()
-    .single();
+  return await db.transaction(async (tx) => {
+    // 1. Create product
+    const [newProduct] = await tx
+      .insert(products)
+      .values({
+        name: product.name,
+        sku: product.sku,
+        category_id: product.category_id,
+        brand: product.brand || "",
+        cost_price: product.cost_price.toString(),
+        selling_price: product.selling_price.toString(),
+        quantity: product.quantity,
+        low_stock_threshold: product.low_stock_threshold || 10,
+        image_url: product.image_url || null,
+        description: product.description || "",
+      })
+      .returning();
 
-  if (error) throw error;
+    // 2. Create inventory record
+    await tx.insert(inventory).values({
+      product_id: newProduct.id,
+      quantity: product.quantity,
+    });
 
-  // Create initial inventory record
-  await supabase.from("inventory").insert({
-    product_id: data.id,
-    quantity: product.quantity,
-  });
-
-  // Create initial stock movement if quantity > 0
-  if (product.quantity > 0) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: userProfile } = await supabase
-        .from("users")
-        .select("id")
-        .eq("auth_id", user.id)
-        .single();
-
-      if (userProfile) {
-        await supabase.from("stock_movements").insert({
-          product_id: data.id,
-          type: "stock_in",
-          quantity: product.quantity,
-          previous_quantity: 0,
-          new_quantity: product.quantity,
-          user_id: userProfile.id,
-          notes: "Initial stock",
-        });
-      }
+    // 3. Create initial stock movement if quantity > 0
+    if (product.quantity > 0 && profile) {
+      await tx.insert(stock_movements).values({
+        product_id: newProduct.id,
+        type: "stock_in",
+        quantity: product.quantity,
+        previous_quantity: 0,
+        new_quantity: product.quantity,
+        user_id: profile.id,
+        notes: "Initial stock",
+      });
     }
-  }
 
-  revalidatePath("/products");
-  return data;
+    return newProduct;
+  });
 }
 
 export async function updateProduct(
@@ -129,18 +174,27 @@ export async function updateProduct(
     status?: string;
   }
 ) {
-  const supabase = await createClient();
+  const updateData: Record<string, any> = {
+    updated_at: new Date(),
+  };
 
-  const { data, error } = await supabase
-    .from("products")
-    .update({ ...product, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select()
-    .single();
+  if (product.name !== undefined) updateData.name = product.name;
+  if (product.sku !== undefined) updateData.sku = product.sku;
+  if (product.category_id !== undefined) updateData.category_id = product.category_id;
+  if (product.brand !== undefined) updateData.brand = product.brand;
+  if (product.cost_price !== undefined) updateData.cost_price = product.cost_price.toString();
+  if (product.selling_price !== undefined) updateData.selling_price = product.selling_price.toString();
+  if (product.low_stock_threshold !== undefined) updateData.low_stock_threshold = product.low_stock_threshold;
+  if (product.image_url !== undefined) updateData.image_url = product.image_url;
+  if (product.description !== undefined) updateData.description = product.description;
+  if (product.status !== undefined) updateData.status = product.status;
 
-  if (error) throw error;
+  const [data] = await db
+    .update(products)
+    .set(updateData)
+    .where(eq(products.id, id))
+    .returning();
 
-  revalidatePath("/products");
   return data;
 }
 
@@ -149,11 +203,5 @@ export async function archiveProduct(id: string) {
 }
 
 export async function deleteProduct(id: string) {
-  const supabase = await createClient();
-
-  const { error } = await supabase.from("products").delete().eq("id", id);
-
-  if (error) throw error;
-
-  revalidatePath("/products");
+  await db.delete(products).where(eq(products.id, id));
 }

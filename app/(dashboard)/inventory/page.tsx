@@ -24,6 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
+import { recordStockMovementAction } from "@/features/inventory/actions/record-stock-movement";
 
 interface Product {
   id: string;
@@ -94,58 +95,14 @@ export default function InventoryPage() {
     setIsSubmitting(true);
 
     try {
-      const supabase = createClient();
-      const product = products.find((p) => p.id === selectedProduct);
-      if (!product) throw new Error("Product not found");
-
       const qty = parseInt(quantity);
-      let newQuantity = product.quantity;
 
-      if (movementType === "stock_in") {
-        newQuantity = product.quantity + qty;
-      } else if (movementType === "stock_out") {
-        if (qty > product.quantity) {
-          throw new Error("Insufficient stock");
-        }
-        newQuantity = product.quantity - qty;
-      } else if (movementType === "adjustment") {
-        newQuantity = qty;
-      }
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { data: userProfile } = await supabase
-        .from("users")
-        .select("id")
-        .eq("auth_id", user.id)
-        .single();
-
-      if (!userProfile) throw new Error("User profile not found");
-
-      // Create stock movement
-      const { error: movementError } = await supabase
-        .from("stock_movements")
-        .insert({
-          product_id: selectedProduct,
-          type: movementType,
-          quantity: qty,
-          previous_quantity: product.quantity,
-          new_quantity: newQuantity,
-          user_id: userProfile.id,
-          notes,
-        });
-
-      if (movementError) throw movementError;
-
-      // Update product quantity
-      const { error: productError } = await supabase
-        .from("products")
-        .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
-        .eq("id", selectedProduct);
-
-      if (productError) throw productError;
+      await recordStockMovementAction({
+        product_id: selectedProduct,
+        type: movementType as "stock_in" | "stock_out" | "adjustment" | "return",
+        quantity: qty,
+        notes,
+      });
 
       toast.success("Stock updated successfully");
       setIsFormOpen(false);
