@@ -36,54 +36,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const supabase = createClient();
-
-    const getUser = async () => {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) {
-          console.error("[AuthProvider] Error fetching user:", error.message);
-        }
-        setUser(user);
-
-        if (user) {
-          const profileData = await getCurrentUserProfile();
-          setProfile(profileData);
-        } else {
-          setProfile(null);
-        }
-      } catch (err) {
-        console.error("[AuthProvider] Unexpected error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getUser();
+    let isMounted = true;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          const profileData = await getCurrentUserProfile();
-          setProfile(profileData);
-        } else {
-          setProfile(null);
+        const currentUser = session?.user ?? null;
+        if (isMounted) {
+          setUser(currentUser);
         }
 
-        setLoading(false);
+        if (currentUser) {
+          try {
+            const profileData = await getCurrentUserProfile();
+            if (isMounted) {
+              setProfile(profileData);
+            }
+          } catch (err) {
+            console.error("[AuthProvider] Error fetching profile:", err);
+            if (isMounted) {
+              setProfile(null);
+            }
+          }
+        } else {
+          if (isMounted) {
+            setProfile(null);
+          }
+        }
 
-        if (event === "SIGNED_IN") {
-          router.refresh();
+        if (isMounted) {
+          setLoading(false);
         }
       }
     );
 
-
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -43,8 +43,7 @@ export function LoginForm() {
       }
 
       toast.success("Welcome back!");
-      router.push("/dashboard");
-      router.refresh();
+      window.location.href = "/dashboard";
     } catch {
       toast.error("An unexpected error occurred");
     } finally {
@@ -120,12 +119,6 @@ export function LoginForm() {
         )}
       </Button>
 
-      <p className="text-center text-sm text-text-secondary">
-        Don&apos;t have an account?{" "}
-        <Link href="/signup" className="font-medium text-gold hover:text-gold-hover">
-          Sign up
-        </Link>
-      </p>
     </form>
   );
 }
