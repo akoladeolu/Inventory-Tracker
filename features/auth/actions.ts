@@ -34,9 +34,12 @@ export async function createUserAction(input: CreateUserInput) {
     const data = createUserSchema.parse(input);
 
     // Initialize standalone supabase client for creating user
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const isAdminClient = !!serviceRoleKey;
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      isAdminClient ? serviceRoleKey : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         auth: {
           persistSession: false,
@@ -45,30 +48,55 @@ export async function createUserAction(input: CreateUserInput) {
       }
     );
 
-    // Sign up user via supabase auth (using standalone client to avoid current Owner session collision)
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: {
+    let authId: string;
+
+    if (isAdminClient) {
+      // Use Admin API to create user (bypasses email rate limits and auto-confirms email)
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: data.email,
+        password: data.password,
+        email_confirm: true, // Mark email as confirmed automatically
+        user_metadata: {
           name: data.name,
         },
-      },
-    });
+      });
 
-    if (authError) {
-      return { success: false, error: authError.message };
-    }
+      if (authError) {
+        return { success: false, error: authError.message };
+      }
+      if (!authData.user) {
+        return { success: false, error: "Failed to create auth user via Admin API" };
+      }
+      authId = authData.user.id;
+    } else {
+      // Fallback to public sign up (subject to email rate limits and verification settings)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+          },
+        },
+      });
 
-    if (!authData.user) {
-      return { success: false, error: "Failed to create auth user" };
+      if (authError) {
+        return { 
+          success: false, 
+          error: `${authError.message}. (Tip: Add SUPABASE_SERVICE_ROLE_KEY to your .env.local file to bypass email rate limits entirely)` 
+        };
+      }
+      if (!authData.user) {
+        return { success: false, error: "Failed to create auth user" };
+      }
+      authId = authData.user.id;
     }
 
     // Create database profile
     const [newProfile] = await db
       .insert(users)
       .values({
-        auth_id: authData.user.id,
+        auth_id: authId,
         email: data.email,
         name: data.name,
         role: data.role,
