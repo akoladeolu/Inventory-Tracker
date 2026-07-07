@@ -155,12 +155,16 @@ export default function SettingsPage() {
     }
     setIsCreatingUser(true);
     try {
-      await createUserAction({
+      const res = await createUserAction({
         name: newUserName,
         email: newUserEmail,
         password: newUserPassword,
         role: newUserRole,
       });
+      if (!res.success) {
+        toast.error(res.error || "Failed to create user");
+        return;
+      }
       toast.success("User created successfully");
       setIsAddUserOpen(false);
       setNewUserName("");
@@ -177,7 +181,11 @@ export default function SettingsPage() {
 
   const handleRoleChange = async (userId: string, role: "owner" | "manager" | "staff") => {
     try {
-      await updateUserRoleAction(userId, role);
+      const res = await updateUserRoleAction(userId, role);
+      if (!res.success) {
+        toast.error(res.error || "Failed to update role");
+        return;
+      }
       toast.success("Role updated successfully");
       await fetchUsers();
     } catch (err: any) {
@@ -189,7 +197,11 @@ export default function SettingsPage() {
     if (!userToDelete) return;
     setIsDeletingUser(true);
     try {
-      await deleteUserAction(userToDelete.id);
+      const res = await deleteUserAction(userToDelete.id);
+      if (!res.success) {
+        toast.error(res.error || "Failed to delete user");
+        return;
+      }
       toast.success("User deleted successfully");
       setUserToDelete(null);
       await fetchUsers();
