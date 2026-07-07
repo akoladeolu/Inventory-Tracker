@@ -280,7 +280,7 @@ export default function SalesPage() {
               <div className="flex-1 space-y-2">
                 <Label>Product</Label>
                 <Select value={selectedProduct} onValueChange={(v) => setSelectedProduct(v ?? "")}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select product" />
                   </SelectTrigger>
                   <SelectContent>
@@ -367,7 +367,7 @@ export default function SalesPage() {
             <div className="space-y-2">
               <Label>Payment Method</Label>
               <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v ?? "cash")}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
