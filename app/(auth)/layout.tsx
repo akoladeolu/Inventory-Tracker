@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthSlideshow } from "@/features/auth/components/auth-slideshow";
 
 export default function AuthLayout({
   children,
@@ -7,18 +8,9 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex min-h-screen">
-      {/* Left side - Brand Image */}
+      {/* Left side - Brand Image Slideshow */}
       <div className="relative hidden w-1/2 lg:block">
-        <img
-          src="/images/store.jpg"
-          alt="TEEKEH Store"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-charcoal/60" />
-        <div className="relative flex h-full flex-col items-center justify-center">
-          <h1 className="mb-2 text-6xl font-bold text-white">TEEKEH</h1>
-          <p className="text-xl text-gray-300">Inventory Tracker</p>
-        </div>
+        <AuthSlideshow />
       </div>
 
       {/* Right side - Form */}

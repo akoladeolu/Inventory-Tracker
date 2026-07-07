@@ -131,3 +131,18 @@
     font-family: var(--font-heading), sans-serif;
   }
 }
+
+@layer utilities {
+  .animate-slow-zoom {
+    animation: slow-zoom 10s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes slow-zoom {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.1);
+  }
+}
