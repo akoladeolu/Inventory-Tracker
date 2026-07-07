@@ -52,13 +52,13 @@ export function LowStockAlerts({ products }: LowStockAlertsProps) {
                 </div>
                 <div className="text-right">
                   <p
-                    className={`text-lg font-bold ${
+                    className={`text-lg font-bold font-heading ${
                       product.quantity === 0 ? "text-error" : "text-warning"
                     }`}
                   >
                     {product.quantity}
                   </p>
-                  <p className="text-xs text-text-secondary">
+                  <p className="text-xs text-text-secondary font-heading">
                     / {product.low_stock_threshold}
                   </p>
                 </div>

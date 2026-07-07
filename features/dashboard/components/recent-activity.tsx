@@ -56,7 +56,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
                   </div>
                   <div className="text-right">
                     <p
-                      className={`text-sm font-semibold ${
+                      className={`text-sm font-semibold font-heading ${
                         activity.type === "stock_in" || activity.type === "return"
                           ? "text-success"
                           : activity.type === "stock_out" || activity.type === "sale"

@@ -60,6 +60,9 @@
   --radius-4xl: calc(var(--radius) * 2.6);
   --font-sans: var(--font-inter);
   --font-heading: var(--font-bricolage);
+
+  /* Soft elevation shadow from BRAND.md */
+  --shadow-soft: 0 6px 24px rgba(0, 0, 0, 0.08);
 }
 
 :root {
@@ -120,6 +123,9 @@
   }
   html {
     @apply font-sans;
+  }
+  button, input, optgroup, select, textarea {
+    font-family: var(--font-sans), sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading), sans-serif;

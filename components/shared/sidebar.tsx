@@ -47,7 +47,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="flex h-16 items-center justify-between border-b border-soft-black px-4">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-gold">TEEKEH</span>
+            <span className="text-xl font-bold text-gold font-heading tracking-wide">TEEKEH</span>
           </Link>
         )}
         <button

@@ -70,8 +70,8 @@ export function ProductForm({
       sku: initialData?.sku || "",
       category_id: initialData?.category_id || "",
       brand: initialData?.brand || "",
-      cost_price: initialData?.cost_price || 0,
-      selling_price: initialData?.selling_price || 0,
+      cost_price: (initialData?.cost_price !== undefined ? initialData.cost_price.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "") as any,
+      selling_price: (initialData?.selling_price !== undefined ? initialData.selling_price.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "") as any,
       quantity: initialData?.quantity || 0,
       low_stock_threshold: initialData?.low_stock_threshold || 10,
       description: initialData?.description || "",
@@ -238,9 +238,9 @@ export function ProductForm({
               <Label htmlFor="cost_price">Cost Price *</Label>
               <Input
                 id="cost_price"
-                type="number"
-                step="0.01"
-                {...register("cost_price", { valueAsNumber: true })}
+                type="text"
+                placeholder="e.g., 1,500.00"
+                {...register("cost_price")}
                 className={errors.cost_price ? "border-error" : ""}
               />
               {errors.cost_price && (
@@ -252,9 +252,9 @@ export function ProductForm({
               <Label htmlFor="selling_price">Selling Price *</Label>
               <Input
                 id="selling_price"
-                type="number"
-                step="0.01"
-                {...register("selling_price", { valueAsNumber: true })}
+                type="text"
+                placeholder="e.g., 2,500.00"
+                {...register("selling_price")}
                 className={errors.selling_price ? "border-error" : ""}
               />
               {errors.selling_price && (

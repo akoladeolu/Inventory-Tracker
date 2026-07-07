@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
 
 interface Sale {
   id: string;
@@ -48,8 +49,8 @@ export function RecentSales({ sales }: RecentSalesProps) {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-success">
-                    ${Number(sale.total).toFixed(2)}
+                  <p className="text-sm font-semibold font-heading text-success">
+                    {formatCurrency(sale.total)}
                   </p>
                   <Badge variant="outline" className="text-xs">
                     {sale.payment_method}

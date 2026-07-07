@@ -23,6 +23,8 @@ import {
   deleteProductAction,
 } from "@/features/products/actions/product-actions";
 import { PermissionGate } from "@/components/shared/permission-gate";
+import { ProductForm } from "@/features/products/components/product-form";
+import { formatCurrency } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -59,6 +61,8 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   const fetchProduct = useCallback(async () => {
     const supabase = createClient();
@@ -88,6 +92,13 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     fetchProduct();
+
+    async function fetchCategories() {
+      const supabase = createClient();
+      const { data } = await supabase.from("categories").select("*").order("name");
+      setCategories(data || []);
+    }
+    fetchCategories();
   }, [fetchProduct]);
 
   const handleArchive = async () => {
@@ -155,12 +166,20 @@ export default function ProductDetailPage() {
         </Button>
         <div className="flex gap-2">
           {product.status === "active" && (
-            <PermissionGate permission="products:write">
-              <Button variant="outline" onClick={handleArchive} disabled={isArchiving}>
-                <Archive className="mr-2 h-4 w-4" />
-                Archive
-              </Button>
-            </PermissionGate>
+            <>
+              <PermissionGate permission="products:write">
+                <Button variant="outline" onClick={() => setIsFormOpen(true)} className="gap-2">
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </Button>
+              </PermissionGate>
+              <PermissionGate permission="products:write">
+                <Button variant="outline" onClick={handleArchive} disabled={isArchiving}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  Archive
+                </Button>
+              </PermissionGate>
+            </>
           )}
           <PermissionGate permission="products:delete">
             <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
@@ -193,9 +212,15 @@ export default function ProductDetailPage() {
                     <h1 className="text-2xl font-bold text-charcoal">{product.name}</h1>
                     <p className="text-text-secondary">{product.sku}</p>
                   </div>
-                  <Badge variant={product.status === "active" ? "default" : "secondary"}>
-                    {product.status}
-                  </Badge>
+                  {product.status === "active" ? (
+                    <Badge className="bg-success/10 text-success border border-success/20 font-semibold uppercase tracking-wider text-[10px] px-2 py-0.5">
+                      Active
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-error/10 text-error border border-error/20 font-semibold uppercase tracking-wider text-[10px] px-2 py-0.5">
+                      Archived
+                    </Badge>
+                  )}
                 </div>
                 {product.brand && (
                   <p className="mt-2 text-sm text-text-secondary">Brand: {product.brand}</p>
@@ -210,11 +235,11 @@ export default function ProductDetailPage() {
                 </div>
                 <div>
                   <p className="text-sm text-text-secondary">Cost Price</p>
-                  <p className="font-medium">${Number(product.cost_price).toFixed(2)}</p>
+                  <p className="font-medium">{formatCurrency(product.cost_price)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-text-secondary">Selling Price</p>
-                  <p className="font-medium">${Number(product.selling_price).toFixed(2)}</p>
+                  <p className="font-medium">{formatCurrency(product.selling_price)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-text-secondary">Margin</p>
@@ -329,6 +354,17 @@ export default function ProductDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ProductForm
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        initialData={product}
+        categories={categories}
+        onSuccess={() => {
+          setIsFormOpen(false);
+          fetchProduct();
+        }}
+      />
     </div>
   );
 }

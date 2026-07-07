@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
+import { formatCurrency } from "@/lib/utils";
 
 interface SaleItem {
   id: string;
@@ -189,10 +190,10 @@ export default function SaleDetailPage() {
                         {(item.products as any)?.sku}
                       </p>
                     </div>
-                    <span className="text-sm">${Number(item.unit_price).toFixed(2)}</span>
+                    <span className="text-sm">{formatCurrency(item.unit_price)}</span>
                     <span className="text-sm font-medium">{item.quantity}</span>
                     <span className="text-sm font-semibold text-success">
-                      ${Number(item.total).toFixed(2)}
+                      {formatCurrency(item.total)}
                     </span>
                   </div>
                 ))}
@@ -210,16 +211,16 @@ export default function SaleDetailPage() {
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-text-secondary">Subtotal</span>
-                <span>${Number(sale.subtotal).toFixed(2)}</span>
+                <span>{formatCurrency(sale.subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-text-secondary">Discount</span>
-                <span>-${Number(sale.discount).toFixed(2)}</span>
+                <span>-{formatCurrency(sale.discount)}</span>
               </div>
               <Separator />
               <div className="flex justify-between text-lg font-bold">
                 <span>Total</span>
-                <span className="text-success">${Number(sale.total).toFixed(2)}</span>
+                <span className="text-success">{formatCurrency(sale.total)}</span>
               </div>
             </CardContent>
           </Card>

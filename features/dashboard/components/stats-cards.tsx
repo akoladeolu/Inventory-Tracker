@@ -2,6 +2,7 @@
 
 import { Package, Warehouse, AlertTriangle, DollarSign, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/utils";
 
 interface StatsCardsProps {
   stats: {
@@ -43,7 +44,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
     },
     {
       title: "Inventory Value",
-      value: `$${stats.inventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: formatCurrency(stats.inventoryValue),
       icon: DollarSign,
       description: "Total cost value",
     },
@@ -60,10 +61,10 @@ export function StatsCards({ stats }: StatsCardsProps) {
             <card.icon className="h-4 w-4 text-text-secondary" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${card.alert ? "text-warning" : ""}`}>
+            <div className={`text-3xl font-bold font-heading tracking-tight ${card.alert ? "text-warning" : ""}`}>
               {card.value}
             </div>
-            <p className="text-xs text-text-secondary">{card.description}</p>
+            <p className="text-xs text-text-secondary mt-1">{card.description}</p>
           </CardContent>
         </Card>
       ))}

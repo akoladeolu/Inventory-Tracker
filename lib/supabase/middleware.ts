@@ -6,6 +6,15 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
+  // Fast-path: Skip authentication network requests for prefetch requests to prevent blocking navigation
+  const isPrefetch =
+    request.headers.get("next-router-prefetch") === "1" ||
+    request.headers.get("purpose") === "prefetch";
+
+  if (isPrefetch) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

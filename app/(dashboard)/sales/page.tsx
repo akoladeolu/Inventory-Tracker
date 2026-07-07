@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -232,7 +233,7 @@ export default function SalesPage() {
               <span className="text-sm text-text-secondary">
                 {new Date(sale.created_at).toLocaleDateString()}
               </span>
-              <span className="font-medium text-success">${Number(sale.total).toFixed(2)}</span>
+              <span className="font-medium text-success">{formatCurrency(sale.total)}</span>
               <Badge variant="outline" className="w-fit capitalize">
                 {sale.payment_method}
               </Badge>
@@ -285,7 +286,7 @@ export default function SalesPage() {
                   <SelectContent>
                     {products.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.name} - ${Number(p.selling_price).toFixed(2)} ({p.quantity} in stock)
+                        {p.name} - {formatCurrency(p.selling_price)} ({p.quantity} in stock)
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -323,9 +324,9 @@ export default function SalesPage() {
                     className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 border-b border-border px-4 py-2 last:border-0"
                   >
                     <span className="text-sm">{item.product_name}</span>
-                    <span className="text-sm">${item.unit_price.toFixed(2)}</span>
-                    <span className="text-sm">{item.quantity}</span>
-                    <span className="text-sm font-medium">${item.total.toFixed(2)}</span>
+                    <span className="text-sm">{formatCurrency(item.unit_price)}</span>
+                    <span className="text-sm font-medium">{item.quantity}</span>
+                    <span className="text-sm font-medium">{formatCurrency(item.total)}</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -343,7 +344,7 @@ export default function SalesPage() {
             <div className="space-y-2 border-t border-border pt-4">
               <div className="flex justify-between text-sm">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span>Discount</span>
@@ -358,7 +359,7 @@ export default function SalesPage() {
               </div>
               <div className="flex justify-between text-lg font-bold">
                 <span>Total</span>
-                <span className="text-success">${total.toFixed(2)}</span>
+                <span className="text-success">{formatCurrency(total)}</span>
               </div>
             </div>
 

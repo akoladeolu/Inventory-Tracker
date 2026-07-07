@@ -18,6 +18,7 @@ import { useProducts } from "@/features/products/hooks/use-products";
 import { ProductForm } from "@/features/products/components/product-form";
 import { createClient } from "@/lib/supabase/client";
 import { PermissionGate } from "@/components/shared/permission-gate";
+import { formatCurrency } from "@/lib/utils";
 
 interface Category {
   id: string;
@@ -170,8 +171,8 @@ export default function ProductsPage() {
                   </div>
                 </div>
                 <span className="text-sm">{product.categories?.name || "—"}</span>
-                <span className="text-sm">${Number(product.cost_price).toFixed(2)}</span>
-                <span className="text-sm">${Number(product.selling_price).toFixed(2)}</span>
+                <span className="text-sm">{formatCurrency(product.cost_price)}</span>
+                <span className="text-sm">{formatCurrency(product.selling_price)}</span>
                 <span
                   className={`text-sm font-medium ${
                     product.quantity === 0
@@ -183,9 +184,15 @@ export default function ProductsPage() {
                 >
                   {product.quantity}
                 </span>
-                <Badge variant={product.status === "active" ? "default" : "secondary"}>
-                  {product.status}
-                </Badge>
+                {product.status === "active" ? (
+                  <Badge className="bg-success/10 text-success border border-success/20 font-semibold uppercase tracking-wider text-[10px] px-2 py-0.5">
+                    Active
+                  </Badge>
+                ) : (
+                  <Badge className="bg-error/10 text-error border border-error/20 font-semibold uppercase tracking-wider text-[10px] px-2 py-0.5">
+                    Archived
+                  </Badge>
+                )}
               </Link>
             ))}
           </div>

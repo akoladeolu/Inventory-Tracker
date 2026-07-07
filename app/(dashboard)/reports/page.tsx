@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { BarChart3, TrendingUp, Package, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
+import { formatCurrency } from "@/lib/utils";
 import {
   BarChart,
   Bar,
@@ -253,7 +254,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold">${salesSummary.today.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">{formatCurrency(salesSummary.today)}</p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -263,7 +264,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold">${salesSummary.thisWeek.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">{formatCurrency(salesSummary.thisWeek)}</p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -273,7 +274,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold">${salesSummary.thisMonth.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">{formatCurrency(salesSummary.thisMonth)}</p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -315,7 +316,7 @@ export default function ReportsPage() {
                           stroke="#10b981"
                           strokeWidth={2}
                           dot={{ fill: "#10b981" }}
-                          name="Revenue ($)"
+                          name="Revenue (₦)"
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -357,7 +358,7 @@ export default function ReportsPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold text-success">
-                      ${inventorySummary.totalValue.toFixed(2)}
+                      {formatCurrency(inventorySummary.totalValue)}
                     </p>
                   </CardContent>
                 </Card>
@@ -431,7 +432,7 @@ export default function ReportsPage() {
                           ))}
                         </Pie>
                         <Tooltip
-                          formatter={(value) => `$${Number(value).toFixed(2)}`}
+                          formatter={(value) => formatCurrency(Number(value))}
                           contentStyle={{
                             backgroundColor: "hsl(var(--surface))",
                             border: "1px solid hsl(var(--border))",
@@ -505,7 +506,7 @@ export default function ReportsPage() {
                         <XAxis type="number" className="text-xs" />
                         <YAxis dataKey="name" type="category" width={120} className="text-xs" />
                         <Tooltip
-                          formatter={(value) => `$${Number(value).toFixed(2)}`}
+                          formatter={(value) => formatCurrency(Number(value))}
                           contentStyle={{
                             backgroundColor: "hsl(var(--surface))",
                             border: "1px solid hsl(var(--border))",
@@ -539,7 +540,7 @@ export default function ReportsPage() {
                             </div>
                           </div>
                           <p className="font-semibold text-success">
-                            ${product.revenue.toFixed(2)}
+                            {formatCurrency(product.revenue)}
                           </p>
                         </div>
                       ))}
