@@ -39,10 +39,11 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Password state
+  // Change Password state
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   // User Management state (Owner Only)
   const [usersList, setUsersList] = useState<any[]>([]);
@@ -140,6 +141,7 @@ export default function SettingsPage() {
       toast.success("Password changed successfully");
       setNewPassword("");
       setConfirmPassword("");
+      setIsChangePasswordOpen(false);
     } catch (error: any) {
       toast.error(error.message || "Failed to change password");
     } finally {
@@ -251,47 +253,14 @@ export default function SettingsPage() {
                 className="bg-muted capitalize"
               />
             </div>
-            <Button onClick={handleSaveProfile} disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save Changes"}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Change Password */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Change Password</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-text-secondary">
-              Update your password to keep your account secure.
-            </p>
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <Input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
-              />
+            <div className="flex gap-2">
+              <Button onClick={handleSaveProfile} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
+              <Button variant="outline" onClick={() => setIsChangePasswordOpen(true)}>
+                Change Password
+              </Button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-              />
-            </div>
-            <Button
-              onClick={handleChangePassword}
-              disabled={isChangingPassword || !newPassword || !confirmPassword}
-            >
-              {isChangingPassword ? "Changing..." : "Change Password"}
-            </Button>
           </CardContent>
         </Card>
 
@@ -382,7 +351,7 @@ export default function SettingsPage() {
         )}
 
         {/* Account */}
-        <Card className="lg:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>Account</CardTitle>
           </CardHeader>
@@ -397,6 +366,59 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Change Password Dialog */}
+      <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Update your password to keep your account secure.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="dialog-new-password">New Password</Label>
+              <Input
+                id="dialog-new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dialog-confirm-password">Confirm New Password</Label>
+              <Input
+                id="dialog-confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+              />
+            </div>
+          </div>
+          <DialogFooter className="pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsChangePasswordOpen(false);
+                setNewPassword("");
+                setConfirmPassword("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChangePassword}
+              disabled={isChangingPassword || !newPassword || !confirmPassword}
+            >
+              {isChangingPassword ? "Changing..." : "Change Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add User Dialog */}
       <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
@@ -477,7 +499,7 @@ export default function SettingsPage() {
       <Dialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-error">Delete Team Member</DialogTitle>
+            <DialogTitle className="text-error">Delete User</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete {userToDelete?.name}&apos;s account? This action cannot be undone.
             </DialogDescription>
