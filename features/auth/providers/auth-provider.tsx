@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { getCurrentUserProfile } from "@/features/auth/actions";
 
 interface UserProfile {
   id: string;
@@ -11,8 +12,8 @@ interface UserProfile {
   email: string;
   name: string;
   role: "owner" | "manager" | "staff";
-  created_at: string;
-  updated_at: string;
+  created_at: string | Date;
+  updated_at: string | Date;
 }
 
 interface AuthContextType {
@@ -45,15 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(user);
 
         if (user) {
-          const { data, error: profileError } = await supabase
-            .from("users")
-            .select("*")
-            .eq("auth_id", user.id)
-            .single();
-          if (profileError) {
-            console.error("[AuthProvider] Error fetching profile:", profileError.message);
-          }
-          setProfile(data);
+          const profileData = await getCurrentUserProfile();
+          setProfile(profileData);
         } else {
           setProfile(null);
         }
@@ -71,15 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const { data, error } = await supabase
-            .from("users")
-            .select("*")
-            .eq("auth_id", session.user.id)
-            .single();
-          if (error) {
-            console.error("[AuthProvider] Error fetching profile on auth change:", error.message);
-          }
-          setProfile(data);
+          const profileData = await getCurrentUserProfile();
+          setProfile(profileData);
         } else {
           setProfile(null);
         }
@@ -91,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     );
+
 
     return () => {
       subscription.unsubscribe();

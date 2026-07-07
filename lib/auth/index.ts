@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+
 export async function getUser() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -8,20 +12,18 @@ export async function getUser() {
 }
 
 export async function getUserProfile() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
 
   if (!user) {
     return null;
   }
 
-  const { data } = await supabase
-    .from("users")
-    .select("*")
-    .eq("auth_id", user.id)
-    .single();
+  const [profile] = await db
+    .select()
+    .from(users)
+    .where(eq(users.auth_id, user.id));
 
-  return data;
+  return profile || null;
 }
 
 export async function requireAuth() {

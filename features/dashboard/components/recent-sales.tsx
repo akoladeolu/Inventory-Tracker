@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge";
 interface Sale {
   id: string;
   invoice_number: string;
-  customer_name: string;
-  total: number;
+  customer_name: string | null;
+  total: string | number;
   payment_method: string;
-  created_at: string;
+  created_at: string | Date;
 }
 
 interface RecentSalesProps {

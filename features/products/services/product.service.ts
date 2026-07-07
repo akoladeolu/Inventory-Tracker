@@ -1,3 +1,5 @@
+"use server";
+
 import { db } from "@/lib/db";
 import { products, categories, inventory, stock_movements } from "@/lib/db/schema";
 import { eq, sql, and, ilike, or } from "drizzle-orm";
