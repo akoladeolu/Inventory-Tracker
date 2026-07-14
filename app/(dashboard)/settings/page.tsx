@@ -265,6 +265,22 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Account */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Account</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-text-secondary">
+              Sign out of your account. You will need to sign in again to access the application.
+            </p>
+            <Separator />
+            <Button variant="destructive" onClick={logout}>
+              Sign Out
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* User Management (Owner Only) */}
         {profile?.role === "owner" && (
           <Card className="lg:col-span-2">
@@ -350,22 +366,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         )}
-
-        {/* Account */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Account</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-text-secondary">
-              Sign out of your account. You will need to sign in again to access the application.
-            </p>
-            <Separator />
-            <Button variant="destructive" onClick={logout}>
-              Sign Out
-            </Button>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Change Password Dialog */}
