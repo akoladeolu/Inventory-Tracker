@@ -244,12 +244,15 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-sm text-text-secondary">Margin</p>
                   <p className="font-medium text-success">
-                    {(
-                      ((Number(product.selling_price) - Number(product.cost_price)) /
-                        Number(product.cost_price)) *
-                      100
-                    ).toFixed(1)}
-                    %
+                    {Number(product.cost_price) > 0 ? (
+                      (
+                        ((Number(product.selling_price) - Number(product.cost_price)) /
+                          Number(product.cost_price)) *
+                        100
+                      ).toFixed(1) + "%"
+                    ) : (
+                      "—"
+                    )}
                   </p>
                 </div>
               </div>

@@ -102,8 +102,11 @@ export default function SalesPage() {
     if (!product) return;
 
     const qty = parseInt(itemQuantity);
-    if (qty <= 0 || qty > product.quantity) {
-      toast.error("Invalid quantity");
+    const existingItem = items.find((i) => i.product_id === product.id);
+    const currentAddedQty = existingItem ? existingItem.quantity : 0;
+
+    if (qty <= 0 || (currentAddedQty + qty) > product.quantity) {
+      toast.error(`Invalid quantity. Only ${product.quantity} items in stock, you have already added ${currentAddedQty}.`);
       return;
     }
 
@@ -143,6 +146,17 @@ export default function SalesPage() {
     e.preventDefault();
     if (items.length === 0) {
       toast.error("Please add at least one item");
+      return;
+    }
+
+    const parsedDiscount = parseFloat(discount || "0");
+    if (isNaN(parsedDiscount) || parsedDiscount < 0) {
+      toast.error("Discount must be a valid positive number");
+      return;
+    }
+
+    if (total < 0) {
+      toast.error("Total price cannot be negative. Please adjust the discount.");
       return;
     }
 
@@ -218,7 +232,7 @@ export default function SalesPage() {
           <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_80px] gap-4 border-b border-border px-4 py-3 text-sm font-medium text-text-secondary">
             <span>Invoice</span>
             <span>Customer</span>
-            <span>Items</span>
+            <span>Date</span>
             <span>Total</span>
             <span>Payment</span>
             <span></span>

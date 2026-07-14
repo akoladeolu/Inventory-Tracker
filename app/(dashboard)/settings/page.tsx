@@ -34,7 +34,7 @@ import {
 } from "@/features/auth/actions";
 
 export default function SettingsPage() {
-  const { profile } = useUser();
+  const { profile, refreshProfile } = useUser();
   const { logout } = useLogout();
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -99,6 +99,7 @@ export default function SettingsPage() {
       if (error) throw error;
 
       toast.success("Profile updated successfully");
+      await refreshProfile?.();
     } catch (error: any) {
       toast.error(error.message || "Failed to update profile");
     } finally {
