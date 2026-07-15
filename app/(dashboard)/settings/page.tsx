@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +62,10 @@ export default function SettingsPage() {
   const [userToDelete, setUserToDelete] = useState<any | null>(null);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
 
+  // Activity Logs state
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(true);
+
   useEffect(() => {
     if (profile) {
       setName(profile.name);
@@ -83,6 +88,33 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  const fetchLogs = useCallback(async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("activity_logs")
+        .select(`
+          *,
+          users (name)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setLogs(data || []);
+    } catch (err: any) {
+      console.error("Failed to load activity logs:", err.message);
+    } finally {
+      setLoadingLogs(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (profile?.role === "owner" || profile?.role === "manager") {
+      fetchLogs();
+    }
+  }, [profile, fetchLogs]);
 
   const handleSaveProfile = async () => {
     if (!profile) return;
@@ -360,6 +392,59 @@ export default function SettingsPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Activity Logs (Owner & Manager) */}
+        {(profile?.role === "owner" || profile?.role === "manager") && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Activity Logs</CardTitle>
+              <p className="text-sm text-text-secondary mt-1">
+                Recent actions performed on the inventory tracker.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {loadingLogs ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-gold" />
+                </div>
+              ) : logs.length === 0 ? (
+                <p className="py-6 text-center text-text-secondary">No activity logs found</p>
+              ) : (
+                <div className="rounded-lg border border-border">
+                  <div className="grid grid-cols-[1.5fr_1fr_1.5fr_3fr] gap-4 border-b border-border bg-muted/50 px-4 py-2.5 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                    <span>User</span>
+                    <span>Action</span>
+                    <span>Entity</span>
+                    <span>Details</span>
+                  </div>
+                  <div className="divide-y divide-border max-h-[300px] overflow-y-auto">
+                    {logs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="grid grid-cols-[1.5fr_1fr_1.5fr_3fr] gap-4 px-4 py-3 text-xs items-center"
+                      >
+                        <span className="font-medium text-text-primary">
+                          {log.users?.name || "System"}
+                        </span>
+                        <span>
+                          <Badge variant="outline" className="capitalize text-[10px]">
+                            {log.action}
+                          </Badge>
+                        </span>
+                        <span className="text-text-secondary font-mono">
+                          {log.entity_type}
+                        </span>
+                        <span className="text-text-secondary truncate" title={log.details}>
+                          {log.details}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

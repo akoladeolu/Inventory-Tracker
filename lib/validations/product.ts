@@ -16,7 +16,8 @@ export const productSchema = z.object({
   name: z.string().min(1, "Product name is required").max(255, "Name must be less than 255 characters"),
   sku: z.string().min(1, "SKU is required").max(100, "SKU must be less than 100 characters"),
   category_id: z.string().uuid("Please select a valid category"),
-  brand: z.string().max(255, "Brand must be less than 255 characters").optional().default(""),
+  brand_id: z.string().uuid("Please select a valid brand").optional().nullable(),
+  barcode: z.string().max(100, "Barcode must be less than 100 characters").optional().nullable(),
   cost_price: z.preprocess(
     pricePreprocess,
     z.number({ invalid_type_error: "Cost price must be a valid number" }).min(0, "Cost price must be positive")

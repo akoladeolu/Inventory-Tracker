@@ -30,7 +30,9 @@ interface Product {
   id: string;
   name: string;
   sku: string;
-  brand: string;
+  brand_id?: string | null;
+  barcode?: string | null;
+  brands?: { name: string } | null;
   cost_price: number;
   selling_price: number;
   quantity: number;
@@ -63,13 +65,14 @@ export default function ProductDetailPage() {
   const [isArchiving, setIsArchiving] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
 
   const fetchProduct = useCallback(async () => {
     const supabase = createClient();
 
     const { data: productData } = await supabase
       .from("products")
-      .select("*, categories(name)")
+      .select("*, categories(name), brands(name)")
       .eq("id", params.id)
       .single();
 
@@ -98,7 +101,13 @@ export default function ProductDetailPage() {
       const { data } = await supabase.from("categories").select("*").order("name");
       setCategories(data || []);
     }
+    async function fetchBrands() {
+      const supabase = createClient();
+      const { data } = await supabase.from("brands").select("*").order("name");
+      setBrands(data || []);
+    }
     fetchCategories();
+    fetchBrands();
   }, [fetchProduct]);
 
   const handleArchive = async () => {
@@ -210,7 +219,10 @@ export default function ProductDetailPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h1 className="text-2xl font-bold text-charcoal">{product.name}</h1>
-                    <p className="text-text-secondary">{product.sku}</p>
+                    <p className="text-text-secondary">SKU: {product.sku}</p>
+                    {product.barcode && (
+                      <p className="text-xs text-text-secondary mt-1">Barcode: {product.barcode}</p>
+                    )}
                   </div>
                   {product.status === "active" ? (
                     <Badge className="bg-success/10 text-success border border-success/20 font-semibold uppercase tracking-wider text-[10px] px-2 py-0.5">
@@ -222,8 +234,8 @@ export default function ProductDetailPage() {
                     </Badge>
                   )}
                 </div>
-                {product.brand && (
-                  <p className="mt-2 text-sm text-text-secondary">Brand: {product.brand}</p>
+                {product.brands?.name && (
+                  <p className="mt-2 text-sm text-text-secondary">Brand: {product.brands.name}</p>
                 )}
               </div>
             </CardHeader>
@@ -363,6 +375,7 @@ export default function ProductDetailPage() {
         onOpenChange={setIsFormOpen}
         initialData={product}
         categories={categories}
+        brands={brands}
         onSuccess={() => {
           setIsFormOpen(false);
           fetchProduct();

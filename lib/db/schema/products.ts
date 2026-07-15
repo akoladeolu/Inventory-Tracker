@@ -10,6 +10,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { categories } from "./categories";
+import { brands } from "./brands";
 
 export const productStatusEnum = pgEnum("product_status", [
   "active",
@@ -25,7 +26,8 @@ export const products = pgTable(
     category_id: uuid("category_id")
       .references(() => categories.id)
       .notNull(),
-    brand: varchar("brand", { length: 255 }).default(""),
+    brand_id: uuid("brand_id").references(() => brands.id),
+    barcode: varchar("barcode", { length: 100 }).unique(),
     cost_price: decimal("cost_price", { precision: 10, scale: 2 }).notNull(),
     selling_price: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
     quantity: integer("quantity").notNull().default(0),
@@ -40,5 +42,7 @@ export const products = pgTable(
     index("products_category_idx").on(table.category_id),
     index("products_status_idx").on(table.status),
     index("products_sku_idx").on(table.sku),
+    index("products_brand_idx").on(table.brand_id),
+    index("products_barcode_idx").on(table.barcode),
   ]
 );

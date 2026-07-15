@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, ShoppingCart, Search, Eye } from "lucide-react";
+import { Plus, ShoppingCart, Search, Eye, Camera } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -27,12 +27,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { createSaleAction } from "@/features/sales/actions/create-sale";
+import { validateCouponAction } from "@/features/coupons/actions/coupon-actions";
 import { PermissionGate } from "@/components/shared/permission-gate";
+import { BarcodeScanner } from "@/components/shared/barcode-scanner";
 
 interface Product {
   id: string;
   name: string;
   sku: string;
+  barcode?: string | null;
   selling_price: number;
   quantity: number;
 }
@@ -70,12 +73,20 @@ export default function SalesPage() {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Coupon states
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+  const total = subtotal - parseFloat(discount || "0");
+
   const fetchData = useCallback(async () => {
     const supabase = createClient();
 
     const { data: productsData } = await supabase
       .from("products")
-      .select("id, name, sku, selling_price, quantity")
+      .select("id, name, sku, barcode, selling_price, quantity")
       .eq("status", "active")
       .gt("quantity", 0)
       .order("name");
@@ -90,6 +101,162 @@ export default function SalesPage() {
     setSales(salesData || []);
     setLoading(false);
   }, []);
+
+  // Recalculate coupon discount when subtotal or applied coupon changes
+  useEffect(() => {
+    if (appliedCoupon) {
+      let couponDiscount = 0;
+      if (appliedCoupon.discount_type === "percentage") {
+        couponDiscount = subtotal * (appliedCoupon.discount_value / 100);
+        if (appliedCoupon.max_discount_amount && couponDiscount > appliedCoupon.max_discount_amount) {
+          couponDiscount = appliedCoupon.max_discount_amount;
+        }
+      } else {
+        couponDiscount = appliedCoupon.discount_value;
+      }
+      setDiscount(couponDiscount.toFixed(2));
+    }
+  }, [subtotal, appliedCoupon]);
+
+  // Reset form states on close
+  useEffect(() => {
+    if (!isFormOpen) {
+      setCustomerName("");
+      setCustomerPhone("");
+      setItems([]);
+      setDiscount("0");
+      setPaymentMethod("cash");
+      setCouponCode("");
+      setAppliedCoupon(null);
+    }
+  }, [isFormOpen]);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsApplyingCoupon(true);
+    try {
+      const res = await validateCouponAction(couponCode, subtotal);
+      if (!res.success || !res.coupon) {
+        toast.error(res.error || "Invalid coupon code");
+        return;
+      }
+
+      const coupon = res.coupon;
+      let couponDiscount = 0;
+      if (coupon.discount_type === "percentage") {
+        couponDiscount = subtotal * (coupon.discount_value / 100);
+        if (coupon.max_discount_amount && couponDiscount > coupon.max_discount_amount) {
+          couponDiscount = coupon.max_discount_amount;
+        }
+      } else {
+        couponDiscount = coupon.discount_value;
+      }
+
+      setAppliedCoupon(coupon);
+      setDiscount(couponDiscount.toFixed(2));
+      toast.success(`Coupon code "${coupon.code}" applied!`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to apply coupon");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setDiscount("0");
+    toast.success("Coupon removed");
+  };
+
+  // Scanner states
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannerType, setScannerType] = useState<"product" | "coupon">("product");
+
+  const openProductScanner = () => {
+    setScannerType("product");
+    setIsScannerOpen(true);
+  };
+
+  const openCouponScanner = () => {
+    setScannerType("coupon");
+    setIsScannerOpen(true);
+  };
+
+  const handleProductScan = (code: string) => {
+    const trimmedCode = code.trim();
+    const product = products.find(
+      (p) =>
+        (p.barcode && p.barcode.toLowerCase() === trimmedCode.toLowerCase()) ||
+        p.sku.toLowerCase() === trimmedCode.toLowerCase()
+    );
+
+    if (!product) {
+      toast.error(`Product with SKU or Barcode "${code}" not found or out of stock`);
+      return;
+    }
+
+    const existingItem = items.find((i) => i.product_id === product.id);
+    const currentAddedQty = existingItem ? existingItem.quantity : 0;
+
+    if (currentAddedQty + 1 > product.quantity) {
+      toast.error(`Cannot add more "${product.name}". Only ${product.quantity} in stock.`);
+      return;
+    }
+
+    const existingIndex = items.findIndex((i) => i.product_id === product.id);
+    if (existingIndex >= 0) {
+      const newItems = [...items];
+      newItems[existingIndex].quantity += 1;
+      newItems[existingIndex].total =
+        newItems[existingIndex].quantity * newItems[existingIndex].unit_price;
+      setItems(newItems);
+    } else {
+      setItems([
+        ...items,
+        {
+          product_id: product.id,
+          product_name: product.name,
+          unit_price: Number(product.selling_price),
+          quantity: 1,
+          total: Number(product.selling_price),
+        },
+      ]);
+    }
+    toast.success(`"${product.name}" added to cart!`);
+  };
+
+  const handleCouponScan = async (code: string) => {
+    const trimmedCode = code.trim().toUpperCase();
+    setCouponCode(trimmedCode);
+    setIsApplyingCoupon(true);
+    try {
+      const res = await validateCouponAction(trimmedCode, subtotal);
+      if (!res.success || !res.coupon) {
+        toast.error(res.error || "Invalid coupon code");
+        return;
+      }
+
+      const coupon = res.coupon;
+      let couponDiscount = 0;
+      if (coupon.discount_type === "percentage") {
+        couponDiscount = subtotal * (coupon.discount_value / 100);
+        if (coupon.max_discount_amount && couponDiscount > coupon.max_discount_amount) {
+          couponDiscount = coupon.max_discount_amount;
+        }
+      } else {
+        couponDiscount = coupon.discount_value;
+      }
+
+      setAppliedCoupon(coupon);
+      setDiscount(couponDiscount.toFixed(2));
+      toast.success(`Coupon code "${coupon.code}" applied!`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to apply coupon");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -139,9 +306,6 @@ export default function SalesPage() {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const total = subtotal - parseFloat(discount || "0");
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) {
@@ -170,6 +334,7 @@ export default function SalesPage() {
         discount: parseFloat(discount || "0"),
         total,
         payment_method: paymentMethod as "cash" | "card" | "transfer" | "mobile",
+        coupon_id: appliedCoupon?.id || null,
         items: items.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,
@@ -180,11 +345,6 @@ export default function SalesPage() {
 
       toast.success("Sale completed successfully");
       setIsFormOpen(false);
-      setCustomerName("");
-      setCustomerPhone("");
-      setItems([]);
-      setDiscount("0");
-      setPaymentMethod("cash");
       fetchData();
     } catch (error: any) {
       toast.error(error.message || "Failed to process sale");
@@ -290,9 +450,19 @@ export default function SalesPage() {
             </div>
 
             {/* Add Item */}
-            <div className="flex gap-4">
+            <div className="flex gap-4 items-end">
               <div className="flex-1 space-y-2">
-                <Label>Product</Label>
+                <Label className="flex justify-between items-center">
+                  <span>Product</span>
+                  <button
+                    type="button"
+                    onClick={openProductScanner}
+                    className="text-xs text-gold hover:underline inline-flex items-center gap-1 font-semibold"
+                  >
+                    <Camera className="h-3.5 w-3.5" />
+                    Scan Barcode
+                  </button>
+                </Label>
                 <Select value={selectedProduct} onValueChange={(v) => setSelectedProduct(v ?? "")}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select product" />
@@ -354,6 +524,54 @@ export default function SalesPage() {
               </div>
             )}
 
+            {/* Coupon Code */}
+            <div className="space-y-1.5 border-t border-border pt-4">
+              <Label className="text-xs font-semibold flex justify-between items-center">
+                <span>Apply Coupon</span>
+                {!appliedCoupon && (
+                  <button
+                    type="button"
+                    onClick={openCouponScanner}
+                    disabled={items.length === 0}
+                    className="text-[11px] text-gold hover:underline inline-flex items-center gap-1 font-semibold disabled:opacity-50"
+                  >
+                    <Camera className="h-3 w-3" />
+                    Scan Coupon QR
+                  </button>
+                )}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g. SUMMER50"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  disabled={!!appliedCoupon || items.length === 0}
+                  className="flex-1 uppercase font-heading font-medium tracking-wide h-9 text-sm"
+                />
+                {appliedCoupon ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleRemoveCoupon}
+                    className="h-9"
+                  >
+                    Remove
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleApplyCoupon}
+                    disabled={!couponCode || isApplyingCoupon || items.length === 0}
+                    className="h-9"
+                  >
+                    {isApplyingCoupon ? "..." : "Apply"}
+                  </Button>
+                )}
+              </div>
+            </div>
+
             {/* Totals */}
             <div className="space-y-2 border-t border-border pt-4">
               <div className="flex justify-between text-sm">
@@ -368,7 +586,8 @@ export default function SalesPage() {
                   step="0.01"
                   value={discount}
                   onChange={(e) => setDiscount(e.target.value)}
-                  className="w-24 text-right"
+                  disabled={!!appliedCoupon}
+                  className="w-24 text-right h-8 text-sm"
                 />
               </div>
               <div className="flex justify-between text-lg font-bold">
@@ -404,6 +623,12 @@ export default function SalesPage() {
           </form>
         </DialogContent>
       </Dialog>
+      <BarcodeScanner
+        open={isScannerOpen}
+        onOpenChange={setIsScannerOpen}
+        onScanSuccess={scannerType === "product" ? handleProductScan : handleCouponScan}
+        title={scannerType === "product" ? "Scan Product Barcode / SKU" : "Scan Coupon Barcode / QR"}
+      />
     </div>
   );
 }

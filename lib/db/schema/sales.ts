@@ -9,6 +9,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
+import { coupons } from "./coupons";
 
 export const paymentMethodEnum = pgEnum("payment_method", [
   "cash",
@@ -28,6 +29,7 @@ export const sales = pgTable(
     discount: decimal("discount", { precision: 10, scale: 2 }).default("0"),
     total: decimal("total", { precision: 10, scale: 2 }).notNull(),
     payment_method: paymentMethodEnum("payment_method").notNull().default("cash"),
+    coupon_id: uuid("coupon_id").references(() => coupons.id),
     user_id: uuid("user_id")
       .references(() => users.id)
       .notNull(),
@@ -36,5 +38,6 @@ export const sales = pgTable(
   (table) => [
     index("sales_user_idx").on(table.user_id),
     index("sales_created_at_idx").on(table.created_at),
+    index("sales_coupon_idx").on(table.coupon_id),
   ]
 );

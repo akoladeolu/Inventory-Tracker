@@ -7,3 +7,7 @@ export { stock_movements, stockMovementTypeEnum } from "./stock-movements";
 export { sales, paymentMethodEnum } from "./sales";
 export { sale_items } from "./sale-items";
 export { customers } from "./customers";
+export { brands } from "./brands";
+export { coupons, discountTypeEnum } from "./coupons";
+export { notifications } from "./notifications";
+export { activity_logs } from "./activity-logs";

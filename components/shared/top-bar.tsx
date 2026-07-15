@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User } from "lucide-react";
+import { NotificationBell } from "@/components/shared/notification-bell";
 
 export function TopBar() {
   const { profile } = useUser();
@@ -32,6 +33,7 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-4">
+        <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-3 outline-none">
             <Avatar className="h-8 w-8">

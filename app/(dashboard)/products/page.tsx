@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useCallback, useEffect } from "react";
-import { Plus, Search, Filter, Package } from "lucide-react";
+import { Plus, Search, Filter, Package, Camera } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,9 @@ import { useProducts } from "@/features/products/hooks/use-products";
 import { ProductForm } from "@/features/products/components/product-form";
 import { createClient } from "@/lib/supabase/client";
 import { PermissionGate } from "@/components/shared/permission-gate";
+import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
+import { BarcodeScanner } from "@/components/shared/barcode-scanner";
 
 interface Category {
   id: string;
@@ -32,6 +34,20 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
+
+  // Scanner state
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+
+  const openProductScanner = () => {
+    setIsScannerOpen(true);
+  };
+
+  const handleProductScan = (code: string) => {
+    setSearch(code);
+    setPage(1);
+    toast.success(`Scanned barcode: ${code}`);
+  };
 
   const { products, total, totalPages, loading, refetch } = useProducts({
     search,
@@ -46,7 +62,13 @@ export default function ProductsPage() {
       const { data } = await supabase.from("categories").select("*").order("name");
       setCategories(data || []);
     }
+    async function fetchBrands() {
+      const supabase = createClient();
+      const { data } = await supabase.from("brands").select("*").order("name");
+      setBrands(data || []);
+    }
     fetchCategories();
+    fetchBrands();
   }, []);
 
   return (
@@ -69,14 +91,23 @@ export default function ProductsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
           <Input
-            placeholder="Search by name or SKU..."
+            placeholder="Search by name, SKU, or barcode..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="pl-9"
+            className="pl-9 pr-10"
           />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={openProductScanner}
+            className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-text-secondary hover:text-gold"
+          >
+            <Camera className="h-4 w-4" />
+          </Button>
         </div>
 
         <Select
@@ -230,10 +261,17 @@ export default function ProductsPage() {
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         categories={categories}
+        brands={brands}
         onSuccess={() => {
           setIsFormOpen(false);
           refetch();
         }}
+      />
+      <BarcodeScanner
+        open={isScannerOpen}
+        onOpenChange={setIsScannerOpen}
+        onScanSuccess={handleProductScan}
+        title="Scan Product SKU / Barcode"
       />
     </div>
   );

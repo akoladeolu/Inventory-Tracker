@@ -37,11 +37,17 @@ interface Category {
   name: string;
 }
 
+interface Brand {
+  id: string;
+  name: string;
+}
+
 interface ProductFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: any;
   categories: Category[];
+  brands: Brand[];
   onSuccess: () => void;
 }
 
@@ -50,6 +56,7 @@ export function ProductForm({
   onOpenChange,
   initialData,
   categories,
+  brands,
   onSuccess,
 }: ProductFormProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +76,8 @@ export function ProductForm({
       name: initialData?.name || "",
       sku: initialData?.sku || "",
       category_id: initialData?.category_id || "",
-      brand: initialData?.brand || "",
+      brand_id: initialData?.brand_id || "",
+      barcode: initialData?.barcode || "",
       cost_price: (initialData?.cost_price !== undefined ? initialData.cost_price.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "") as any,
       selling_price: (initialData?.selling_price !== undefined ? initialData.selling_price.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "") as any,
       quantity: initialData?.quantity || 0,
@@ -180,18 +188,18 @@ export function ProductForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name *</Label>
-              <Input
-                id="name"
-                placeholder="e.g., Leather Watch"
-                {...register("name")}
-                className={errors.name ? "border-error" : ""}
-              />
-              {errors.name && <p className="text-sm text-error">{errors.name.message}</p>}
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="name">Product Name *</Label>
+            <Input
+              id="name"
+              placeholder="e.g., Leather Watch"
+              {...register("name")}
+              className={errors.name ? "border-error" : ""}
+            />
+            {errors.name && <p className="text-sm text-error">{errors.name.message}</p>}
+          </div>
 
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="sku">SKU *</Label>
               <Input
@@ -201,6 +209,17 @@ export function ProductForm({
                 className={errors.sku ? "border-error" : ""}
               />
               {errors.sku && <p className="text-sm text-error">{errors.sku.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="barcode">Barcode</Label>
+              <Input
+                id="barcode"
+                placeholder="e.g., 123456789"
+                {...register("barcode")}
+                className={errors.barcode ? "border-error" : ""}
+              />
+              {errors.barcode && <p className="text-sm text-error">{errors.barcode.message}</p>}
             </div>
           </div>
 
@@ -228,8 +247,26 @@ export function ProductForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="brand">Brand</Label>
-              <Input id="brand" placeholder="e.g., TEEKEH" {...register("brand")} />
+              <Label>Brand</Label>
+              <Select
+                defaultValue={initialData?.brand_id || undefined}
+                onValueChange={(value) => setValue("brand_id", value === "none" ? null : value)}
+              >
+                <SelectTrigger className={errors.brand_id ? "border-error" : ""}>
+                  <SelectValue placeholder="Select brand" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {brands.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.brand_id && (
+                <p className="text-sm text-error">{errors.brand_id.message}</p>
+              )}
             </div>
           </div>
 

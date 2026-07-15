@@ -4,6 +4,7 @@ import { createSale } from "@/features/sales/services/sale.service";
 import { requirePermission } from "@/lib/auth/server-permissions";
 import { saleSchema } from "@/lib/validations/sale";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "@/lib/utils/activity-logger";
 
 interface SaleItemInput {
   product_id: string;
@@ -20,6 +21,7 @@ interface CreateSaleActionInput {
   total: number;
   payment_method: "cash" | "card" | "transfer" | "mobile";
   items: SaleItemInput[];
+  coupon_id?: string | null;
 }
 
 export async function createSaleAction(input: CreateSaleActionInput) {
@@ -48,7 +50,15 @@ export async function createSaleAction(input: CreateSaleActionInput) {
     payment_method: validated.payment_method,
     items,
     user_id: profile.id,
+    coupon_id: validated.coupon_id || null,
   });
+
+  await logActivity(
+    "create",
+    "sale",
+    sale.id,
+    `Created sale for customer "${validated.customer_name || "Walk-in"}" with total amount ₦${total.toLocaleString()}`
+  );
 
   // Revalidate related paths so that stock updates and dashboards sync instantly
   revalidatePath("/sales");

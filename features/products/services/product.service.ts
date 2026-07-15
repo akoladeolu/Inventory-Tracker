@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { products, categories, inventory, stock_movements } from "@/lib/db/schema";
+import { products, categories, inventory, stock_movements, brands } from "@/lib/db/schema";
 import { eq, sql, and, ilike, or } from "drizzle-orm";
 import { getUserProfile } from "@/lib/auth";
 
@@ -43,7 +43,8 @@ export async function getProducts(params?: {
       name: products.name,
       sku: products.sku,
       category_id: products.category_id,
-      brand: products.brand,
+      brand_id: products.brand_id,
+      barcode: products.barcode,
       cost_price: products.cost_price,
       selling_price: products.selling_price,
       quantity: products.quantity,
@@ -56,9 +57,13 @@ export async function getProducts(params?: {
       categories: {
         name: categories.name,
       },
+      brands: {
+        name: brands.name,
+      },
     })
     .from(products)
     .leftJoin(categories, eq(products.category_id, categories.id))
+    .leftJoin(brands, eq(products.brand_id, brands.id))
     .where(where)
     .orderBy(sql`${products.created_at} DESC`)
     .limit(per_page)
@@ -85,7 +90,8 @@ export async function getProduct(id: string) {
       name: products.name,
       sku: products.sku,
       category_id: products.category_id,
-      brand: products.brand,
+      brand_id: products.brand_id,
+      barcode: products.barcode,
       cost_price: products.cost_price,
       selling_price: products.selling_price,
       quantity: products.quantity,
@@ -98,9 +104,13 @@ export async function getProduct(id: string) {
       categories: {
         name: categories.name,
       },
+      brands: {
+        name: brands.name,
+      },
     })
     .from(products)
     .leftJoin(categories, eq(products.category_id, categories.id))
+    .leftJoin(brands, eq(products.brand_id, brands.id))
     .where(eq(products.id, id));
 
   return data;
@@ -110,7 +120,8 @@ export async function createProduct(product: {
   name: string;
   sku: string;
   category_id: string;
-  brand?: string;
+  brand_id?: string | null;
+  barcode?: string | null;
   cost_price: number;
   selling_price: number;
   quantity: number;
@@ -128,7 +139,8 @@ export async function createProduct(product: {
         name: product.name,
         sku: product.sku,
         category_id: product.category_id,
-        brand: product.brand || "",
+        brand_id: product.brand_id || null,
+        barcode: product.barcode || null,
         cost_price: product.cost_price.toString(),
         selling_price: product.selling_price.toString(),
         quantity: product.quantity,
@@ -167,13 +179,14 @@ export async function updateProduct(
     name?: string;
     sku?: string;
     category_id?: string;
-    brand?: string;
+    brand_id?: string | null;
+    barcode?: string | null;
     cost_price?: number;
     selling_price?: number;
-  low_stock_threshold?: number;
-  image_url?: string | null;
-  description?: string;
-  status?: string;
+    low_stock_threshold?: number;
+    image_url?: string | null;
+    description?: string;
+    status?: string;
   }
 ) {
   const updateData: Record<string, any> = {
@@ -183,7 +196,8 @@ export async function updateProduct(
   if (product.name !== undefined) updateData.name = product.name;
   if (product.sku !== undefined) updateData.sku = product.sku;
   if (product.category_id !== undefined) updateData.category_id = product.category_id;
-  if (product.brand !== undefined) updateData.brand = product.brand;
+  if (product.brand_id !== undefined) updateData.brand_id = product.brand_id;
+  if (product.barcode !== undefined) updateData.barcode = product.barcode;
   if (product.cost_price !== undefined) updateData.cost_price = product.cost_price.toString();
   if (product.selling_price !== undefined) updateData.selling_price = product.selling_price.toString();
   if (product.low_stock_threshold !== undefined) updateData.low_stock_threshold = product.low_stock_threshold;

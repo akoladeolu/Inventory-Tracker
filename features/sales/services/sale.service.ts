@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { sales, sale_items, products, stock_movements, inventory } from "@/lib/db/schema";
+import { sales, sale_items, products, stock_movements, inventory, coupons, notifications } from "@/lib/db/schema";
 import { eq, and, gte, sql } from "drizzle-orm";
 
 interface SaleItemInput {
@@ -18,6 +18,7 @@ interface CreateSaleInput {
   payment_method: "cash" | "card" | "transfer" | "mobile";
   user_id: string;
   items: SaleItemInput[];
+  coupon_id?: string | null;
 }
 
 export async function createSale(input: CreateSaleInput) {
@@ -37,8 +38,20 @@ export async function createSale(input: CreateSaleInput) {
         total: input.total.toString(),
         payment_method: input.payment_method,
         user_id: input.user_id,
+        coupon_id: input.coupon_id || null,
       })
       .returning();
+
+    // 1.5 Increment coupon usage count if coupon was used
+    if (input.coupon_id) {
+      await tx
+        .update(coupons)
+        .set({
+          usage_count: sql`${coupons.usage_count} + 1`,
+          updated_at: new Date(),
+        })
+        .where(eq(coupons.id, input.coupon_id));
+    }
 
     // 2. Process each item
     for (const item of input.items) {
@@ -80,6 +93,15 @@ export async function createSale(input: CreateSaleInput) {
 
       if (!updatedProduct) {
         throw new Error(`Insufficient stock for product: ${item.product_id}`);
+      }
+
+      // Check for low stock warning and trigger notification
+      if (updatedProduct.quantity <= updatedProduct.low_stock_threshold) {
+        await tx.insert(notifications).values({
+          type: "low_stock",
+          title: "Low Stock Alert",
+          message: `Product "${updatedProduct.name}" (${updatedProduct.sku}) is low in stock. Current quantity: ${updatedProduct.quantity}.`,
+        });
       }
 
       // Sync inventory table, including products created before inventory rows existed.
@@ -131,8 +153,23 @@ export async function getSales(params?: {
 
 export async function getSaleById(id: string) {
   const [sale] = await db
-    .select()
+    .select({
+      id: sales.id,
+      invoice_number: sales.invoice_number,
+      customer_name: sales.customer_name,
+      customer_phone: sales.customer_phone,
+      subtotal: sales.subtotal,
+      discount: sales.discount,
+      total: sales.total,
+      payment_method: sales.payment_method,
+      coupon_id: sales.coupon_id,
+      created_at: sales.created_at,
+      coupon: {
+        code: coupons.code,
+      },
+    })
     .from(sales)
+    .leftJoin(coupons, eq(sales.coupon_id, coupons.id))
     .where(eq(sales.id, id));
 
   if (!sale) return null;

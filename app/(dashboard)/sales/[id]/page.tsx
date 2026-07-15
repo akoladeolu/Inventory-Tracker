@@ -34,6 +34,7 @@ interface Sale {
   payment_method: string;
   created_at: string;
   users: { name: string } | null;
+  coupons?: { code: string } | null;
 }
 
 export default function SaleDetailPage() {
@@ -51,7 +52,8 @@ export default function SaleDetailPage() {
         .from("sales")
         .select(`
           *,
-          users (name)
+          users (name),
+          coupons (code)
         `)
         .eq("id", params.id)
         .single();
@@ -215,7 +217,14 @@ export default function SaleDetailPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-text-secondary">Discount</span>
-                <span>-{formatCurrency(sale.discount)}</span>
+                <span className="flex flex-col items-end">
+                  <span>-{formatCurrency(sale.discount)}</span>
+                  {sale.coupons?.code && (
+                    <span className="text-[10px] text-gold font-medium bg-gold/10 px-1.5 py-0.5 rounded mt-0.5 uppercase tracking-wide">
+                      Code: {sale.coupons.code}
+                    </span>
+                  )}
+                </span>
               </div>
               <Separator />
               <div className="flex justify-between text-lg font-bold">

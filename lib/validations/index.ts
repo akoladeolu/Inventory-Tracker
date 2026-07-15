@@ -15,3 +15,9 @@ export type { StockMovementInput, StockAdjustmentInput } from "./stock";
 
 export { saleSchema, saleSearchSchema } from "./sale";
 export type { SaleInput, SaleSearchInput } from "./sale";
+
+export { brandSchema } from "./brand";
+export type { BrandInput } from "./brand";
+
+export { couponSchema } from "./coupon";
+export type { CouponInput } from "./coupon";

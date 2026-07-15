@@ -12,6 +12,7 @@ export const saleSchema = z.object({
   items: z.array(saleItemSchema).min(1, "At least one item is required"),
   discount: z.number().min(0, "Discount must be non-negative").default(0),
   payment_method: z.enum(["cash", "card", "transfer", "mobile"]).default("cash"),
+  coupon_id: z.string().uuid("Please select a valid coupon").optional().nullable(),
 });
 
 export const saleSearchSchema = z.object({
