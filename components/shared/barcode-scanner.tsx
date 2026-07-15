@@ -30,10 +30,13 @@ export function BarcodeScanner({
   const VIEWPORT_ID = "scanner-viewport";
 
   useEffect(() => {
+    let active = true;
+
     if (!open) {
       if (scannerRef.current) {
-        if (scannerRef.current.isScanning) {
-          scannerRef.current
+        const scanner = scannerRef.current;
+        if (scanner.isScanning) {
+          scanner
             .stop()
             .then(() => {
               scannerRef.current = null;
@@ -54,47 +57,79 @@ export function BarcodeScanner({
 
     // Wait for the Dialog transition to mount DOM nodes
     const timer = setTimeout(() => {
-      const html5Qrcode = new Html5Qrcode(VIEWPORT_ID);
-      scannerRef.current = html5Qrcode;
+      if (!active) return;
 
-      html5Qrcode
-        .start(
-          { facingMode: "environment" },
-          {
-            fps: 15,
-            qrbox: (width, height) => {
-              const boxWidth = Math.min(width, height) * 0.8;
-              const boxHeight = boxWidth * 0.6;
-              return { width: boxWidth, height: boxHeight };
+      const element = document.getElementById(VIEWPORT_ID);
+      if (!element) {
+        console.warn("Scanner viewport element not found in DOM");
+        return;
+      }
+
+      try {
+        const html5Qrcode = new Html5Qrcode(VIEWPORT_ID);
+        scannerRef.current = html5Qrcode;
+
+        html5Qrcode
+          .start(
+            { facingMode: "environment" },
+            {
+              fps: 15,
+              qrbox: (width, height) => {
+                const boxWidth = Math.min(width, height) * 0.8;
+                const boxHeight = boxWidth * 0.6;
+                return { width: boxWidth, height: boxHeight };
+              },
             },
-          },
-          async (decodedText) => {
-            if (html5Qrcode.isScanning) {
-              await html5Qrcode.stop();
+            async (decodedText) => {
+              try {
+                if (html5Qrcode.isScanning) {
+                  await html5Qrcode.stop();
+                }
+              } catch (e) {
+                console.error("Error stopping scanner on success", e);
+              }
+              scannerRef.current = null;
+              onScanSuccess(decodedText);
+              onOpenChange(false);
+            },
+            () => {
+              // Ignore noise
             }
-            scannerRef.current = null;
-            onScanSuccess(decodedText);
-            onOpenChange(false);
-          },
-          () => {
-            // Ignore noise
-          }
-        )
-        .then(() => {
-          setHasCameraPermission(true);
-          setIsInitializing(false);
-        })
-        .catch((err) => {
-          console.error("Scanner initialization failed", err);
-          setHasCameraPermission(false);
-          setIsInitializing(false);
-        });
+          )
+          .then(() => {
+            if (!active) {
+              if (html5Qrcode.isScanning) {
+                html5Qrcode.stop().catch(console.error);
+              }
+              scannerRef.current = null;
+              return;
+            }
+            setHasCameraPermission(true);
+            setIsInitializing(false);
+          })
+          .catch((err) => {
+            if (!active) return;
+            console.error("Scanner startup failed", err);
+            setHasCameraPermission(false);
+            setIsInitializing(false);
+          });
+      } catch (err) {
+        if (!active) return;
+        console.error("Failed to initialize scanner:", err);
+        setHasCameraPermission(false);
+        setIsInitializing(false);
+      }
     }, 300);
 
     return () => {
+      active = false;
       clearTimeout(timer);
-      if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch(console.error);
+      if (scannerRef.current) {
+        const scanner = scannerRef.current;
+        if (scanner.isScanning) {
+          scanner.stop().catch(console.error);
+        }
+        scannerRef.current = null;
       }
     };
   }, [open, onOpenChange, onScanSuccess]);

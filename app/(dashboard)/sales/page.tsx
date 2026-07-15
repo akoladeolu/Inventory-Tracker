@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, ShoppingCart, Search, Eye, Camera } from "lucide-react";
+import { Plus, ShoppingCart, Search, Eye, Camera, Download } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -30,6 +30,7 @@ import { createSaleAction } from "@/features/sales/actions/create-sale";
 import { validateCouponAction } from "@/features/coupons/actions/coupon-actions";
 import { PermissionGate } from "@/components/shared/permission-gate";
 import { BarcodeScanner } from "@/components/shared/barcode-scanner";
+import { exportToCSV } from "@/lib/utils/export";
 
 interface Product {
   id: string;
@@ -258,6 +259,20 @@ export default function SalesPage() {
     }
   };
 
+  const handleExportSales = () => {
+    const headers = [
+      { label: "Invoice Number", key: "invoice_number" },
+      { label: "Customer Name", key: "customer_name" },
+      { label: "Customer Phone", key: "customer_phone" },
+      { label: "Subtotal (₦)", key: "subtotal" },
+      { label: "Discount (₦)", key: "discount" },
+      { label: "Total (₦)", key: "total" },
+      { label: "Payment Method", key: "payment_method" },
+      { label: "Date Created", key: "created_at" },
+    ];
+    exportToCSV(sales, `sales-export-${Date.now()}`, headers);
+  };
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -360,12 +375,18 @@ export default function SalesPage() {
           <h1 className="text-2xl font-bold text-charcoal">Sales</h1>
           <p className="text-text-secondary">Record and manage sales</p>
         </div>
-        <PermissionGate permission="sales:write">
-          <Button onClick={() => setIsFormOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Sale
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportSales} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export CSV
           </Button>
-        </PermissionGate>
+          <PermissionGate permission="sales:write">
+            <Button onClick={() => setIsFormOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Sale
+            </Button>
+          </PermissionGate>
+        </div>
       </div>
 
       {/* Sales List */}

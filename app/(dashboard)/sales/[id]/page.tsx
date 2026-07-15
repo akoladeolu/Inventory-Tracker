@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Receipt, User, CreditCard, Calendar } from "lucide-react";
+import { ArrowLeft, Receipt, User, CreditCard, Calendar, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils";
+import { printReceipt } from "@/lib/utils/export";
 
 interface SaleItem {
   id: string;
@@ -122,6 +123,23 @@ export default function SaleDetailPage() {
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Sales
+        </Button>
+        <Button
+          onClick={() =>
+            printReceipt({
+              ...sale,
+              items: items.map((item) => ({
+                product_name: item.products?.name,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                total: item.total,
+              })),
+            })
+          }
+          className="gap-2 bg-gold hover:bg-gold-hover text-soft-black font-semibold"
+        >
+          <Printer className="h-4 w-4" />
+          Print Receipt
         </Button>
       </div>
 

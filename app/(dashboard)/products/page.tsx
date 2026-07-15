@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useCallback, useEffect } from "react";
-import { Plus, Search, Filter, Package, Camera } from "lucide-react";
+import { Plus, Search, Filter, Package, Camera, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { PermissionGate } from "@/components/shared/permission-gate";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { BarcodeScanner } from "@/components/shared/barcode-scanner";
+import { exportToCSV } from "@/lib/utils/export";
 
 interface Category {
   id: string;
@@ -47,6 +48,19 @@ export default function ProductsPage() {
     setSearch(code);
     setPage(1);
     toast.success(`Scanned barcode: ${code}`);
+  };
+
+  const handleExportProducts = () => {
+    const headers = [
+      { label: "Product Name", key: "name" },
+      { label: "SKU", key: "sku" },
+      { label: "Barcode", key: "barcode" },
+      { label: "Cost Price (₦)", key: "cost_price" },
+      { label: "Selling Price (₦)", key: "selling_price" },
+      { label: "Quantity", key: "quantity" },
+      { label: "Status", key: "status" },
+    ];
+    exportToCSV(products, `products-export-${Date.now()}`, headers);
   };
 
   const { products, total, totalPages, loading, refetch } = useProducts({
@@ -78,12 +92,18 @@ export default function ProductsPage() {
           <h1 className="text-2xl font-bold text-charcoal">Products</h1>
           <p className="text-text-secondary">Manage your product inventory</p>
         </div>
-        <PermissionGate permission="products:write">
-          <Button onClick={() => setIsFormOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Product
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportProducts} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export CSV
           </Button>
-        </PermissionGate>
+          <PermissionGate permission="products:write">
+            <Button onClick={() => setIsFormOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
+            </Button>
+          </PermissionGate>
+        </div>
       </div>
 
       {/* Filters */}
