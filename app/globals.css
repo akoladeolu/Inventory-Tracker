@@ -136,6 +136,9 @@
   .animate-slow-zoom {
     animation: slow-zoom 10s ease-in-out infinite alternate;
   }
+  .glassmorphism {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 dark:bg-black/70 dark:border-white/10 shadow-sm;
+  }
 }
 
 @keyframes slow-zoom {

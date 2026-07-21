@@ -17,6 +17,7 @@ const bricolageGrotesque = Bricolage_Grotesque({
 export const metadata: Metadata = {
   title: "TEEKEH Inventory Tracker",
   description: "Inventory management system for TEEKEH fashion accessories",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

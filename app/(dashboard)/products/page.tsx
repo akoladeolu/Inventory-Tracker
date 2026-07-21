@@ -21,7 +21,7 @@ import { PermissionGate } from "@/components/shared/permission-gate";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { BarcodeScanner } from "@/components/shared/barcode-scanner";
-import { exportToCSV } from "@/lib/utils/export";
+import { exportToCSV, exportToPDF } from "@/lib/utils/export";
 
 interface Category {
   id: string;
@@ -63,6 +63,19 @@ export default function ProductsPage() {
     exportToCSV(products, `products-export-${Date.now()}`, headers);
   };
 
+  const handleExportProductsPDF = () => {
+    const headers = [
+      { label: "Product Name", key: "name" },
+      { label: "SKU", key: "sku" },
+      { label: "Barcode", key: "barcode" },
+      { label: "Cost Price (₦)", key: "cost_price" },
+      { label: "Selling Price (₦)", key: "selling_price" },
+      { label: "Quantity", key: "quantity" },
+      { label: "Status", key: "status" },
+    ];
+    exportToPDF(products, `products-export-${Date.now()}`, headers, "Products Report");
+  };
+
   const { products, total, totalPages, loading, refetch } = useProducts({
     search,
     category_id: categoryFilter || undefined,
@@ -96,6 +109,10 @@ export default function ProductsPage() {
           <Button variant="outline" onClick={handleExportProducts} className="gap-2">
             <Download className="h-4 w-4" />
             Export CSV
+          </Button>
+          <Button variant="outline" onClick={handleExportProductsPDF} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export PDF
           </Button>
           <PermissionGate permission="products:write">
             <Button onClick={() => setIsFormOpen(true)}>

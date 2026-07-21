@@ -1,6 +1,7 @@
 "use client";
 
-import { Package, Warehouse, AlertTriangle, DollarSign, ShoppingCart } from "lucide-react";
+import { motion } from "framer-motion";
+import { Package, Warehouse, AlertTriangle, DollarSign, ShoppingCart, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 
@@ -11,11 +12,27 @@ interface StatsCardsProps {
     lowStockCount: number;
     outOfStockCount: number;
     inventoryValue: number;
+    totalRevenue?: number;
+    grossProfit?: number;
   };
 }
 
 export function StatsCards({ stats }: StatsCardsProps) {
   const cards = [
+    {
+      title: "Total Revenue",
+      value: formatCurrency(stats.totalRevenue || 0),
+      icon: TrendingUp,
+      description: "Lifetime revenue",
+      className: "border-primary/20 bg-primary/5",
+    },
+    {
+      title: "Gross Profit",
+      value: formatCurrency(stats.grossProfit || 0),
+      icon: DollarSign,
+      description: "Estimated profit",
+      className: "border-success/20 bg-success/5 text-success",
+    },
     {
       title: "Total Products",
       value: stats.totalProducts,
@@ -50,24 +67,46 @@ export function StatsCards({ stats }: StatsCardsProps) {
     },
   ];
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+  };
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <motion.div 
+      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
       {cards.map((card) => (
-        <Card key={card.title}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-text-secondary">
-              {card.title}
-            </CardTitle>
-            <card.icon className="h-4 w-4 text-text-secondary" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-3xl font-bold font-heading tracking-tight ${card.alert ? "text-warning" : ""}`}>
-              {card.value}
-            </div>
-            <p className="text-xs text-text-secondary mt-1">{card.description}</p>
-          </CardContent>
-        </Card>
+        <motion.div key={card.title} variants={item}>
+          <Card className={`h-full glassmorphism transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${card.className || ""}`}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-text-secondary truncate pr-2">
+                {card.title}
+              </CardTitle>
+              <card.icon className="h-4 w-4 text-text-secondary shrink-0" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl lg:text-xl xl:text-2xl font-bold font-heading tracking-tight ${card.alert ? "text-warning" : ""}`}>
+                {card.value}
+              </div>
+              <p className="text-xs text-text-secondary mt-1">{card.description}</p>
+            </CardContent>
+          </Card>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }

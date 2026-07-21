@@ -1,6 +1,100 @@
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
 export interface CSVHeader {
   label: string;
   key: string;
+}
+
+export function exportToPDF(data: any[], filename: string, headers: CSVHeader[], title: string) {
+  try {
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(24, 24, 27); // Dark neutral charcoal
+    doc.text(title, 14, 20);
+    
+    // Subtitle / Date
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(113, 113, 122); // zinc-500
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 26);
+    
+    // Replace Naira symbol U+20A6 or ₦ with NGN in headers
+    const tableHeaders = headers.map((h) => {
+      return h.label.replace(/₦/g, "NGN").replace(/\u20A6/g, "NGN");
+    });
+    
+    const currencyKeys = ["subtotal", "discount", "total", "cost_price", "selling_price"];
+    const numericKeys = [...currencyKeys, "quantity", "low_stock_threshold"];
+    
+    const tableData = data.map((row) =>
+      headers.map((h) => {
+        const keys = h.key.split(".");
+        let val: any = row;
+        for (const k of keys) {
+          val = val ? val[k] : "";
+        }
+        
+        if (val === null || val === undefined) {
+          return "";
+        }
+        
+        // Format currency keys
+        if (currencyKeys.includes(h.key) && !isNaN(Number(val)) && val !== "") {
+          return Number(val).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        
+        // Format Date Created
+        if (h.key === "created_at" && val) {
+          try {
+            const d = new Date(val);
+            if (!isNaN(d.getTime())) {
+              return d.toLocaleDateString("en-US");
+            }
+          } catch (e) {
+            // fallback
+          }
+        }
+        
+        const strVal = String(val);
+        return strVal.replace(/₦/g, "NGN").replace(/\u20A6/g, "NGN");
+      })
+    );
+    
+    // Alignments
+    const columnStyles: Record<number, { halign: "left" | "right" | "center" }> = {};
+    headers.forEach((h, index) => {
+      if (numericKeys.includes(h.key)) {
+        columnStyles[index] = { halign: "right" };
+      } else {
+        columnStyles[index] = { halign: "left" };
+      }
+    });
+    
+    autoTable(doc, {
+      startY: 32,
+      head: [tableHeaders],
+      body: tableData,
+      theme: "striped",
+      headStyles: { fillColor: [24, 24, 27], textColor: 255, fontStyle: "bold" },
+      styles: { fontSize: 8, cellPadding: 3, font: "helvetica" },
+      columnStyles,
+      didDrawPage: (data) => {
+        const str = `Page ${data.pageNumber}`;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(161, 161, 170); // zinc-400
+        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+      }
+    });
+    
+    doc.save(`${filename}.pdf`);
+  } catch (error) {
+    console.error("Failed to export PDF:", error);
+  }
 }
 
 export function exportToCSV(data: any[], filename: string, headers: CSVHeader[]) {

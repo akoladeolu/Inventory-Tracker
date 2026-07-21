@@ -30,7 +30,7 @@ import { createSaleAction } from "@/features/sales/actions/create-sale";
 import { validateCouponAction } from "@/features/coupons/actions/coupon-actions";
 import { PermissionGate } from "@/components/shared/permission-gate";
 import { BarcodeScanner } from "@/components/shared/barcode-scanner";
-import { exportToCSV } from "@/lib/utils/export";
+import { exportToCSV, exportToPDF } from "@/lib/utils/export";
 
 interface Product {
   id: string;
@@ -224,6 +224,7 @@ export default function SalesPage() {
         },
       ]);
     }
+    setSelectedProduct(product.id);
     toast.success(`"${product.name}" added to cart!`);
   };
 
@@ -273,6 +274,20 @@ export default function SalesPage() {
     exportToCSV(sales, `sales-export-${Date.now()}`, headers);
   };
 
+  const handleExportSalesPDF = () => {
+    const headers = [
+      { label: "Invoice Number", key: "invoice_number" },
+      { label: "Customer Name", key: "customer_name" },
+      { label: "Customer Phone", key: "customer_phone" },
+      { label: "Subtotal (₦)", key: "subtotal" },
+      { label: "Discount (₦)", key: "discount" },
+      { label: "Total (₦)", key: "total" },
+      { label: "Payment Method", key: "payment_method" },
+      { label: "Date Created", key: "created_at" },
+    ];
+    exportToPDF(sales, `sales-export-${Date.now()}`, headers, "Sales Report");
+  };
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -319,6 +334,24 @@ export default function SalesPage() {
 
   const removeItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
+  };
+
+  const updateItemQuantity = (index: number, newQty: number) => {
+    if (newQty <= 0) return;
+
+    const item = items[index];
+    const product = products.find((p) => p.id === item.product_id);
+    if (!product) return;
+
+    if (newQty > product.quantity) {
+      toast.error(`Only ${product.quantity} items in stock`);
+      return;
+    }
+
+    const newItems = [...items];
+    newItems[index].quantity = newQty;
+    newItems[index].total = newQty * item.unit_price;
+    setItems(newItems);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -379,6 +412,10 @@ export default function SalesPage() {
           <Button variant="outline" onClick={handleExportSales} className="gap-2">
             <Download className="h-4 w-4" />
             Export CSV
+          </Button>
+          <Button variant="outline" onClick={handleExportSalesPDF} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export PDF
           </Button>
           <PermissionGate permission="sales:write">
             <Button onClick={() => setIsFormOpen(true)}>
@@ -529,8 +566,19 @@ export default function SalesPage() {
                     className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 border-b border-border px-4 py-2 last:border-0"
                   >
                     <span className="text-sm">{item.product_name}</span>
-                    <span className="text-sm">{formatCurrency(item.unit_price)}</span>
-                    <span className="text-sm font-medium">{item.quantity}</span>
+                    <span className="text-sm font-medium">{formatCurrency(item.unit_price)}</span>
+                    <div className="flex justify-center">
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          updateItemQuantity(index, isNaN(val) ? 1 : val);
+                        }}
+                        className="w-16 h-8 text-center text-xs"
+                      />
+                    </div>
                     <span className="text-sm font-medium">{formatCurrency(item.total)}</span>
                     <Button
                       type="button"
