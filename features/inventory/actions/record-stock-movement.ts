@@ -13,44 +13,50 @@ interface StockMovementActionInput {
 }
 
 export async function recordStockMovementAction(input: StockMovementActionInput) {
-  const profile = await requirePermission("stock_movements:write");
+  try {
+    const profile = await requirePermission("stock_movements:write");
 
-  // Validate the inputs securely on the server-side
-  let validatedNotes = input.notes || "";
-  let validatedQty = input.quantity;
+    // Validate the inputs securely on the server-side
+    let validatedNotes = input.notes || "";
+    let validatedQty = input.quantity;
 
-  if (input.type === "adjustment") {
-    const data = stockAdjustmentSchema.parse({
-      product_id: input.product_id,
-      new_quantity: input.quantity,
-      notes: input.notes,
-    });
-    validatedQty = data.new_quantity;
-    validatedNotes = data.notes || "";
-  } else {
-    const data = stockMovementSchema.parse({
+    if (input.type === "adjustment") {
+      const data = stockAdjustmentSchema.parse({
+        product_id: input.product_id,
+        new_quantity: input.quantity,
+        notes: input.notes,
+      });
+      validatedQty = data.new_quantity;
+      validatedNotes = data.notes || "";
+    } else {
+      const data = stockMovementSchema.parse({
+        product_id: input.product_id,
+        type: input.type,
+        quantity: input.quantity,
+        notes: input.notes,
+      });
+      validatedQty = data.quantity;
+      validatedNotes = data.notes || "";
+    }
+
+    const movement = await recordStockMovement({
       product_id: input.product_id,
       type: input.type,
-      quantity: input.quantity,
-      notes: input.notes,
+      quantity: validatedQty,
+      notes: validatedNotes,
+      user_id: profile.id,
     });
-    validatedQty = data.quantity;
-    validatedNotes = data.notes || "";
+
+    // Revalidate related paths to update client views instantly
+    revalidatePath("/inventory");
+    revalidatePath("/products");
+    revalidatePath(`/products/${input.product_id}`);
+    revalidatePath("/dashboard");
+
+    return { success: true, data: movement };
+  } catch (err: any) {
+    console.error("Error in recordStockMovementAction:", err);
+    return { success: false, error: err.message || "Failed to record stock movement" };
   }
-
-  const movement = await recordStockMovement({
-    product_id: input.product_id,
-    type: input.type,
-    quantity: validatedQty,
-    notes: validatedNotes,
-    user_id: profile.id,
-  });
-
-  // Revalidate related paths to update client views instantly
-  revalidatePath("/inventory");
-  revalidatePath("/products");
-  revalidatePath(`/products/${input.product_id}`);
-  revalidatePath("/dashboard");
-
-  return movement;
 }
+

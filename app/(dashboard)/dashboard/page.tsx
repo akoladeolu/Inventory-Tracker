@@ -4,6 +4,7 @@ import { RecentActivity } from "@/features/dashboard/components/recent-activity"
 import { LowStockAlerts } from "@/features/dashboard/components/low-stock-alerts";
 import { QuickActions } from "@/features/dashboard/components/quick-actions";
 import { SalesChart } from "@/features/dashboard/components/sales-chart";
+import { MobileAppBanner } from "@/features/dashboard/components/mobile-app-banner";
 import { getDashboardData } from "@/features/dashboard/services/dashboard.service";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,8 @@ export default async function DashboardPage() {
         </div>
         <QuickActions />
       </div>
+
+      <MobileAppBanner />
 
       <StatsCards stats={stats} />
 

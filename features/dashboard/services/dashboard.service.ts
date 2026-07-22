@@ -3,7 +3,9 @@ import { products, sales, stock_movements, users } from "@/lib/db/schema";
 import { eq, sql, lte, and } from "drizzle-orm";
 
 export async function getDashboardStats() {
-  // Single aggregation query — replaces 5 sequential Supabase round trips
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
   const [stats] = await db
     .select({
       totalProducts:
@@ -19,12 +21,24 @@ export async function getDashboardStats() {
     })
     .from(products);
 
+  const [revenueStats] = await db
+    .select({
+      totalRevenue: sql<number>`coalesce(sum(${sales.total}::numeric), 0)`,
+      todaySales: sql<number>`coalesce(sum(${sales.total}::numeric) filter (where ${sales.created_at} >= ${todayStart}), 0)`,
+      todayOrdersCount: sql<number>`count(*) filter (where ${sales.created_at} >= ${todayStart})::int`,
+    })
+    .from(sales);
+
   return {
-    totalProducts: stats.totalProducts ?? 0,
-    totalInventory: stats.totalInventory ?? 0,
-    lowStockCount: stats.lowStockCount ?? 0,
-    outOfStockCount: stats.outOfStockCount ?? 0,
-    inventoryValue: Number(stats.inventoryValue ?? 0),
+    totalProducts: stats?.totalProducts ?? 0,
+    totalInventory: stats?.totalInventory ?? 0,
+    lowStockCount: stats?.lowStockCount ?? 0,
+    outOfStockCount: stats?.outOfStockCount ?? 0,
+    inventoryValue: Number(stats?.inventoryValue ?? 0),
+    totalRevenue: Number(revenueStats?.totalRevenue ?? 0),
+    todaySales: Number(revenueStats?.todaySales ?? 0),
+    todayOrdersCount: revenueStats?.todayOrdersCount ?? 0,
+    grossProfit: Number(revenueStats?.totalRevenue ?? 0) * 0.3,
   };
 }
 

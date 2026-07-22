@@ -56,10 +56,18 @@ export function CategoryForm({
 
     try {
       if (isEditing) {
-        await updateCategoryAction(initialData.id, data);
+        const res = await updateCategoryAction(initialData.id, data);
+        if (!res.success) {
+          toast.error(res.error || "Failed to update category");
+          return;
+        }
         toast.success("Category updated successfully");
       } else {
-        await createCategoryAction(data);
+        const res = await createCategoryAction(data);
+        if (!res.success) {
+          toast.error(res.error || "Failed to create category");
+          return;
+        }
         toast.success("Category created successfully");
       }
 
@@ -72,6 +80,7 @@ export function CategoryForm({
       setIsLoading(false);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

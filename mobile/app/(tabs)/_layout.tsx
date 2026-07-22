@@ -1,26 +1,28 @@
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, ScanLine, Search, User } from 'lucide-react-native';
-import { useColorScheme } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: isDark ? '#60a5fa' : '#2563eb', // blue-400 : blue-600
-        tabBarInactiveTintColor: isDark ? '#a3a3a3' : '#525252', // neutral-400 : neutral-600
+        tabBarActiveTintColor: '#C8A348', // TEEKEH Gold
+        tabBarInactiveTintColor: '#71717A', // neutral-500
         tabBarStyle: {
-          backgroundColor: isDark ? '#0a0a0a' : '#ffffff', // neutral-950 : white
-          borderTopColor: isDark ? '#262626' : '#e5e5e5', // neutral-800 : neutral-200
+          backgroundColor: '#09090B', // Dark charcoal background
+          borderTopColor: '#1E1E22', // Subtle charcoal border
           paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 8),
+          height: 60 + Math.max(insets.bottom, 8),
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-          paddingBottom: 4,
+          fontSize: 11,
+          fontWeight: '600',
+          paddingBottom: 2,
+          letterSpacing: 0.2,
         },
       }}
     >

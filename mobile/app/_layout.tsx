@@ -43,7 +43,7 @@ export default function RootLayout() {
 
     if (session && !inTabsGroup) {
       // Redirect authenticated users to the tabs if they are not already there
-      router.replace('/(tabs)/index');
+      router.replace('/(tabs)');
     } else if (!session && !atLogin) {
       // Redirect unauthenticated users to the login screen if they are not already there
       router.replace('/login');
@@ -53,8 +53,8 @@ export default function RootLayout() {
   if (loading) {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <View className="flex-1 bg-neutral-950 items-center justify-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
+        <View className="flex-1 bg-[#09090B] items-center justify-center">
+          <ActivityIndicator size="large" color="#C8A348" />
         </View>
       </ThemeProvider>
     );
@@ -65,7 +65,6 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="index" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

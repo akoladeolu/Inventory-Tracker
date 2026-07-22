@@ -1,65 +1,67 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import '@/global.css';
-
 import { Platform } from 'react-native';
+
+export const TeekehColors = {
+  gold: '#C8A348',
+  goldLight: '#E5C365',
+  goldDark: '#A6822D',
+  goldAlpha: 'rgba(200, 163, 72, 0.15)',
+  darkbg: '#09090B',
+  charcoal: '#121214',
+  charcoalLight: '#1E1E22',
+  border: '#24242A',
+  borderLight: '#27272A',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#A1A1AA',
+  textMuted: '#71717A',
+  success: '#16A34A',
+  successLight: '#34d399',
+  warning: '#F59E0B',
+  error: '#DC2626',
+  errorLight: '#f87171',
+} as const;
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
+    text: '#111827',
+    background: '#F8F9FA',
     backgroundElement: '#F0F0F3',
     backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    textSecondary: '#6B7280',
+    primary: TeekehColors.gold,
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: TeekehColors.textPrimary,
+    background: TeekehColors.darkbg,
+    backgroundElement: TeekehColors.charcoal,
+    backgroundSelected: TeekehColors.charcoalLight,
+    textSecondary: TeekehColors.textSecondary,
+    primary: TeekehColors.gold,
   },
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type ThemeColor = keyof typeof Colors.light;
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+export const Fonts = {
+  regular: Platform.select({ ios: 'System', android: 'Roboto', default: 'sans-serif' }),
+  medium: Platform.select({ ios: 'System', android: 'Roboto', default: 'sans-serif' }),
+  bold: Platform.select({ ios: 'System', android: 'Roboto', default: 'sans-serif' }),
+  mono: Platform.select({ ios: 'Courier', android: 'monospace', default: 'monospace' }),
+};
 
 export const Spacing = {
   half: 2,
-  one: 4,
+  xs: 4,
   two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+  three: 12,
+  sm: 8,
+  four: 16,
+  five: 20,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+export const TouchTargetMin = 44;
 export const MaxContentWidth = 800;

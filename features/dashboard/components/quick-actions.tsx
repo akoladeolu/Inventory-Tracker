@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PlusCircle, ShoppingCart, PackagePlus, ArrowRightLeft } from "lucide-react";
+import { PlusCircle, ShoppingCart, PackagePlus, ArrowRightLeft, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
@@ -28,10 +28,10 @@ export function QuickActions() {
       color: "bg-surface text-foreground border hover:bg-muted",
     },
     {
-      label: "Transfer",
-      icon: ArrowRightLeft,
-      href: "/inventory",
-      color: "bg-surface text-foreground border hover:bg-muted",
+      label: "Get Mobile App",
+      icon: Smartphone,
+      href: "#",
+      color: "bg-gold/15 text-gold border border-gold/30 hover:bg-gold/20",
     },
   ];
 
