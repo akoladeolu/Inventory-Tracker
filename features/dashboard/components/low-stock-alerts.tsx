@@ -44,9 +44,9 @@ export function LowStockAlerts({ products }: LowStockAlertsProps) {
                 key={product.id}
                 className="flex items-center justify-between rounded-lg border border-warning/20 bg-warning/5 p-3"
               >
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">{product.name}</p>
-                  <p className="text-xs text-text-secondary">
+                <div className="space-y-1 min-w-0 flex-1 pr-2">
+                  <p className="text-sm font-medium truncate">{product.name}</p>
+                  <p className="text-xs text-text-secondary truncate">
                     {product.sku} • {product.categories?.name || "No category"}
                   </p>
                 </div>

@@ -84,7 +84,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
 
   return (
     <motion.div 
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7"
+      className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7"
       variants={container}
       initial="hidden"
       animate="show"
@@ -93,16 +93,21 @@ export function StatsCards({ stats }: StatsCardsProps) {
         <motion.div key={card.title} variants={item}>
           <Card className={`h-full glassmorphism transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${card.className || ""}`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-text-secondary truncate pr-2">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-text-secondary truncate pr-2">
                 {card.title}
               </CardTitle>
               <card.icon className="h-4 w-4 text-text-secondary shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl lg:text-xl xl:text-2xl font-bold font-heading tracking-tight ${card.alert ? "text-warning" : ""}`}>
+              <div 
+                className={`text-xl xl:text-2xl font-black font-heading tracking-tight whitespace-nowrap overflow-hidden text-ellipsis ${
+                  card.alert ? "text-warning" : ""
+                }`}
+                title={String(card.value)}
+              >
                 {card.value}
               </div>
-              <p className="text-xs text-text-secondary mt-1">{card.description}</p>
+              <p className="text-[11px] text-text-secondary mt-1 font-medium truncate">{card.description}</p>
             </CardContent>
           </Card>
         </motion.div>

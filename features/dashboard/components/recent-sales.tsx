@@ -56,11 +56,11 @@ export function RecentSales({ sales }: RecentSalesProps) {
                   key={sale.id}
                   className="flex items-center justify-between border-b border-border pb-4 last:border-0 last:pb-0 hover:bg-muted/30 p-2 rounded-lg transition-colors"
                 >
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">
+                  <div className="space-y-1 min-w-0 flex-1 pr-2">
+                    <p className="text-sm font-medium truncate">
                       {sale.customer_name || "Walk-in Customer"}
                     </p>
-                    <p className="text-xs text-text-secondary">
+                    <p className="text-xs text-text-secondary truncate">
                       {sale.invoice_number}
                     </p>
                   </div>

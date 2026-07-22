@@ -43,15 +43,15 @@ export function RecentActivity({ activities }: RecentActivityProps) {
                   key={activity.id}
                   className="flex items-start justify-between border-b border-border pb-4 last:border-0 last:pb-0"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
+                  <div className="space-y-1 min-w-0 flex-1 pr-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Badge className={config.className}>{config.label}</Badge>
-                      <span className="text-sm font-medium">
+                      <span className="text-sm font-medium truncate">
                         {activity.products?.name || "Unknown Product"}
                       </span>
                     </div>
-                    <p className="text-xs text-text-secondary">
-                      by {activity.users?.name || "Unknown"} • {activity.notes}
+                    <p className="text-xs text-text-secondary truncate">
+                      by {activity.users?.name || "System Staff"} • {activity.notes}
                     </p>
                   </div>
                   <div className="text-right">
