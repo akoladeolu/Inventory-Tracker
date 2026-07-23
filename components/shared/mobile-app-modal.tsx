@@ -15,19 +15,20 @@ import { useMobileAppModal } from "@/hooks/use-mobile-app-modal";
 import { toast } from "sonner";
 
 export const EAS_BUILD_PAGE_URL = "https://expo.dev/accounts/akoladeolu/projects/mobile/builds/a7600e4a-885f-43cc-964a-057fa4f528d7";
-export const EAS_DIRECT_APK_URL = "https://expo.dev/artifacts/eas/a7600e4a-885f-43cc-964a-057fa4f528d7.apk";
+export const EAS_DIRECT_APK_URL = "https://expo.dev/artifacts/eas/ed4f6wx4DXDicQW5ClhyvZo0XL1f0GnYzrXaxLa8mj4.apk";
 
 export function MobileAppModal() {
   const { isOpen, closeModal } = useMobileAppModal();
   const [copied, setCopied] = useState(false);
 
   const apkUrl = process.env.NEXT_PUBLIC_APK_DOWNLOAD_URL || EAS_DIRECT_APK_URL;
-  const qrTargetUrl = process.env.NEXT_PUBLIC_EXPO_BUILD_URL || EAS_BUILD_PAGE_URL;
+  // Use direct APK download URL so phone camera scanning directly triggers APK download
+  const qrTargetUrl = process.env.NEXT_PUBLIC_APK_DOWNLOAD_URL || EAS_DIRECT_APK_URL;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(qrTargetUrl);
+    navigator.clipboard.writeText(apkUrl);
     setCopied(true);
-    toast.success("Download link copied to clipboard!");
+    toast.success("Direct APK download link copied to clipboard!");
     setTimeout(() => setCopied(false), 2500);
   };
 
@@ -132,12 +133,12 @@ export function MobileAppModal() {
 
         <DialogFooter className="flex-row items-center justify-between sm:justify-between pt-2 border-t border-border/50">
           <a
-            href={qrTargetUrl}
+            href={EAS_BUILD_PAGE_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-gold hover:underline inline-flex items-center gap-1"
           >
-            View EAS Build Page <ExternalLink className="h-3 w-3" />
+            View EAS Build Log <ExternalLink className="h-3 w-3" />
           </a>
           <Button
             variant="outline"
