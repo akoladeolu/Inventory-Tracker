@@ -13,7 +13,8 @@ import {
   ChevronRight, 
   ShoppingBag,
   History,
-  Activity
+  Activity,
+  ClipboardCheck
 } from 'lucide-react-native';
 
 interface LowStockItem {
@@ -53,6 +54,7 @@ export default function DashboardScreen() {
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
   const [recentSales, setRecentSales] = useState<RecentSale[]>([]);
   const [recentMovements, setRecentMovements] = useState<RecentMovement[]>([]);
+  const [activeAudits, setActiveAudits] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,13 +70,15 @@ export default function DashboardScreen() {
         productsRes,
         lowStockRes,
         recentSalesRes,
-        recentMovementsRes
+        recentMovementsRes,
+        auditsRes
       ] = await Promise.all([
         supabase.from('sales').select('total').gte('created_at', isoToday),
         supabase.from('products').select('id, quantity, cost_price').eq('status', 'active'),
         supabase.from('products').select('id, name, sku, quantity, low_stock_threshold').eq('status', 'active').lte('quantity', 5).order('quantity', { ascending: true }).limit(5),
         supabase.from('sales').select('id, invoice_number, customer_name, total, created_at').order('created_at', { ascending: false }).limit(5),
-        supabase.from('stock_movements').select('id, type, quantity, created_at, products(name, sku)').order('created_at', { ascending: false }).limit(5)
+        supabase.from('stock_movements').select('id, type, quantity, created_at, products(name, sku)').order('created_at', { ascending: false }).limit(5),
+        supabase.from('stock_audits').select('id, audit_number, scope, status').in('status', ['in_progress', 'pending_review']).order('created_at', { ascending: false }).limit(3)
       ]);
 
       if (salesRes.error) console.error('Sales fetch error:', salesRes.error);
@@ -108,6 +112,10 @@ export default function DashboardScreen() {
 
       if (!recentMovementsRes.error && recentMovementsRes.data) {
         setRecentMovements(recentMovementsRes.data as any[]);
+      }
+
+      if (auditsRes?.data) {
+        setActiveAudits(auditsRes.data);
       }
 
     } catch (err) {
@@ -262,6 +270,41 @@ export default function DashboardScreen() {
             </View>
           )}
         </View>
+
+        {/* Active Audits Section */}
+        {activeAudits.length > 0 && (
+          <TouchableOpacity
+            onPress={() => {
+              triggerHaptic('impactLight');
+              router.push('/audit');
+            }}
+            className="bg-[#121214] border border-[#C8A348]/40 rounded-3xl p-5"
+          >
+            <View className="flex-row items-center justify-between mb-3">
+              <View className="flex-row items-center gap-2.5">
+                <View className="w-8 h-8 rounded-xl bg-[#C8A348]/20 items-center justify-center border border-[#C8A348]/40">
+                  <ClipboardCheck size={16} color="#C8A348" />
+                </View>
+                <Text className="text-white font-bold text-sm tracking-tight">Active Stock Audit</Text>
+              </View>
+              <View className="flex-row items-center gap-1">
+                <Text className="text-[#C8A348] text-xs font-semibold">Tap to Scan</Text>
+                <ChevronRight size={16} color="#C8A348" />
+              </View>
+            </View>
+            {activeAudits.map((audit) => (
+              <View key={audit.id} className="flex-row justify-between items-center bg-[#1A1A1E] p-3 rounded-2xl border border-[#2B2B32] mt-2">
+                <View>
+                  <Text className="text-white font-bold text-xs">{audit.audit_number}</Text>
+                  <Text className="text-neutral-400 text-[10px] uppercase font-semibold mt-0.5">Scope: {audit.scope}</Text>
+                </View>
+                <View className="bg-amber-500/20 border border-amber-500/40 px-2.5 py-1 rounded-full">
+                  <Text className="text-amber-400 text-[10px] font-bold uppercase">{audit.status.replace('_', ' ')}</Text>
+                </View>
+              </View>
+            ))}
+          </TouchableOpacity>
+        )}
 
         {/* Recent Stock Activity Section */}
         <View className="bg-[#121214] border border-[#24242A] rounded-3xl overflow-hidden mb-4">

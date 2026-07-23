@@ -11,3 +11,7 @@ export { brands } from "./brands";
 export { coupons, discountTypeEnum } from "./coupons";
 export { notifications } from "./notifications";
 export { activity_logs } from "./activity-logs";
+export { push_tokens } from './push-tokens';
+export { stock_audits, stock_audit_items } from './stock-audits';
+export { product_variants } from './product-variants';
+export { serial_numbers } from './serial-numbers';

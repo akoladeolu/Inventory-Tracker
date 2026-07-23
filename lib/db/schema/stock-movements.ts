@@ -17,6 +17,7 @@ export const stockMovementTypeEnum = pgEnum("stock_movement_type", [
   "adjustment",
   "sale",
   "return",
+  "audit_adjustment",
 ]);
 
 export const stock_movements = pgTable(
