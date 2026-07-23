@@ -14,9 +14,11 @@ import {
   BarChart3,
   Settings,
   ChevronLeft,
+  Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/features/auth/hooks/use-permissions";
+import { useMobileAppModal } from "@/hooks/use-mobile-app-modal";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "products:read" },
@@ -39,6 +41,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const { checkPermission } = usePermissions();
+  const { openModal } = useMobileAppModal();
 
   return (
     <aside
@@ -84,11 +87,23 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               </Link>
             );
           })}
+
+        {/* Get Mobile App Action */}
+        <button
+          type="button"
+          onClick={openModal}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gold hover:bg-gold/10 transition-colors mt-4 border border-gold/20"
+          )}
+        >
+          <Smartphone className="h-5 w-5 flex-shrink-0 text-gold animate-pulse" />
+          {!collapsed && <span>Get Mobile App</span>}
+        </button>
       </nav>
 
       {/* Footer */}
       {!collapsed && (
-        <div className="border-t border-soft-black p-4">
+        <div className="border-t border-soft-black p-4 flex items-center justify-between">
           <p className="text-xs text-gray-500">Inventory Tracker v1.0</p>
         </div>
       )}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
+import { MobileAppModal } from "./mobile-app-modal";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -21,6 +22,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <TopBar />
         <main className="p-6">{children}</main>
       </div>
+      <MobileAppModal />
     </div>
   );
 }
