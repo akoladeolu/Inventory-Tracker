@@ -7,30 +7,45 @@ import { Button } from "@/components/ui/button";
 
 export function QuickActions() {
   const router = useRouter();
+  const apkDownloadUrl = process.env.NEXT_PUBLIC_APK_DOWNLOAD_URL || "/teekeh-scanner.apk";
+
+  const handleGetMobileApp = () => {
+    // Re-enable banner if dismissed so user can also scan QR code if needed
+    localStorage.removeItem("teekeh_mobile_banner_dismissed");
+    
+    // Trigger direct APK file download
+    const link = document.createElement("a");
+    link.href = apkDownloadUrl;
+    link.download = "teekeh-scanner.apk";
+    link.target = "_blank";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const actions = [
     {
       label: "Record Sale",
       icon: ShoppingCart,
-      href: "/sales",
+      onClick: () => router.push("/sales"),
       color: "bg-primary text-primary-foreground hover:bg-primary/90",
     },
     {
       label: "Receive Stock",
       icon: PackagePlus,
-      href: "/inventory",
+      onClick: () => router.push("/inventory"),
       color: "bg-surface text-foreground border hover:bg-muted",
     },
     {
       label: "Add Product",
       icon: PlusCircle,
-      href: "/products",
+      onClick: () => router.push("/products"),
       color: "bg-surface text-foreground border hover:bg-muted",
     },
     {
       label: "Get Mobile App",
       icon: Smartphone,
-      href: "#",
+      onClick: handleGetMobileApp,
       color: "bg-gold/15 text-gold border border-gold/30 hover:bg-gold/20",
     },
   ];
@@ -46,7 +61,7 @@ export function QuickActions() {
         >
           <Button
             className={`shadow-sm transition-all duration-300 hover:shadow-md ${action.color}`}
-            onClick={() => router.push(action.href)}
+            onClick={action.onClick}
           >
             <action.icon className="mr-2 h-4 w-4" />
             {action.label}

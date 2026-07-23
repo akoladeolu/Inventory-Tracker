@@ -33,7 +33,7 @@ export function RecentSales({ sales }: RecentSalesProps) {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-semibold">Recent Sales</CardTitle>
           <Link
-            href="/dashboard/sales"
+            href="/sales"
             className="text-sm font-medium text-primary hover:underline"
           >
             View all
