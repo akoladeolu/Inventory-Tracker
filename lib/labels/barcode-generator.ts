@@ -1,3 +1,4 @@
+// @ts-ignore
 import bwipjs from 'bwip-js';
 
 export function generateBarcodeDataUrl(
