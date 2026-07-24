@@ -50,7 +50,7 @@ export function LabelPreview({ product, options }: LabelPreviewProps) {
   };
 
   return (
-    <div className="w-[50mm] h-[30mm] p-2 bg-white border border-gray-300 rounded flex flex-col justify-between items-center text-center select-none print:border-none print:shadow-none print:m-0 print:p-1 page-break-inside-avoid">
+    <div className="w-full aspect-[5/3] p-2 bg-white border border-gray-300 rounded flex flex-col justify-between items-center text-center select-none print:w-[50mm] print:h-[30mm] print:border-none print:shadow-none print:m-0 print:p-1 page-break-inside-avoid shadow-sm hover:shadow transition-shadow">
       {/* Brand / Header */}
       <div className="w-full flex justify-between items-center text-[8px] text-gray-500 font-bold uppercase tracking-wider">
         <span>TEEKEH</span>
