@@ -2,6 +2,7 @@ import {
   pgTable,
   uuid,
   varchar,
+  text,
   decimal,
   integer,
   pgEnum,
@@ -30,6 +31,8 @@ export const sales = pgTable(
     total: decimal("total", { precision: 10, scale: 2 }).notNull(),
     payment_method: paymentMethodEnum("payment_method").notNull().default("cash"),
     coupon_id: uuid("coupon_id").references(() => coupons.id),
+    receipt_token: varchar("receipt_token", { length: 64 }).unique(),
+    receipt_url: text("receipt_url"),
     user_id: uuid("user_id")
       .references(() => users.id)
       .notNull(),

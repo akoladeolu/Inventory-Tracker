@@ -463,11 +463,39 @@ export default function SalesScannerScreen() {
       const paymentLabel = paymentMethod === 'cash' ? 'Cash' : paymentMethod === 'transfer' ? 'Bank Transfer' : paymentMethod === 'card' ? 'POS / Card' : 'Online Payment';
 
       triggerHaptic('success');
-      showBrandAlert(
-        'success',
-        'Sale Completed Successfully! 🎉', 
-        `Transaction ID: ${result}\nCustomer: ${customerName || 'Walk-in Customer'}\nPayment Method: ${paymentLabel}\nTotal Paid: ₦${total.toLocaleString()}`
-      );
+
+      // Attempt to generate/fetch receipt token for WhatsApp sharing
+      let receiptToken: string | null = null;
+      try {
+        const { fetchReceiptToken, shareViaWhatsApp } = await import('@/lib/receipt');
+        receiptToken = await fetchReceiptToken(result, supabase);
+        
+        if (customerPhone && receiptToken) {
+          Alert.alert(
+            'Sale Completed! 🎉',
+            `Invoice: ${result}\nTotal: ₦${total.toLocaleString()}\n\nWould you like to send a digital receipt via WhatsApp?`,
+            [
+              { text: 'Skip', style: 'cancel' },
+              {
+                text: '📱 Send WhatsApp Receipt',
+                onPress: () => shareViaWhatsApp(customerPhone, receiptToken!),
+              },
+            ]
+          );
+        } else {
+          showBrandAlert(
+            'success',
+            'Sale Completed Successfully! 🎉', 
+            `Invoice: ${result}\nCustomer: ${customerName || 'Walk-in Customer'}\nPayment Method: ${paymentLabel}\nTotal Paid: ₦${total.toLocaleString()}`
+          );
+        }
+      } catch {
+        showBrandAlert(
+          'success',
+          'Sale Completed Successfully! 🎉', 
+          `Invoice: ${result}\nCustomer: ${customerName || 'Walk-in Customer'}\nPayment Method: ${paymentLabel}\nTotal Paid: ₦${total.toLocaleString()}`
+        );
+      }
 
       clearCart();
       setCustomerName('');

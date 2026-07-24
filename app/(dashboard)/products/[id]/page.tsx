@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Pencil, Archive, Trash2, Package } from "lucide-react";
+import { ArrowLeft, Pencil, Archive, Trash2, Package, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
   deleteProductAction,
 } from "@/features/products/actions/product-actions";
 import { PermissionGate } from "@/components/shared/permission-gate";
+import { LabelGenerator } from "@/features/products/components/LabelGenerator";
 import { ProductForm } from "@/features/products/components/product-form";
 import { formatCurrency } from "@/lib/utils";
 
@@ -64,6 +65,7 @@ export default function ProductDetailPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
 
@@ -180,6 +182,16 @@ export default function ProductDetailPage() {
                 <Button variant="outline" onClick={() => setIsFormOpen(true)} className="gap-2">
                   <Pencil className="h-4 w-4" />
                   Edit
+                </Button>
+              </PermissionGate>
+              <PermissionGate permission="products:write">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsLabelModalOpen(true)}
+                  className="gap-2 border-[#C8A348] text-[#C8A348] hover:bg-[#C8A348]/10"
+                >
+                  <Printer className="h-4 w-4" />
+                  Print Label
                 </Button>
               </PermissionGate>
               <PermissionGate permission="products:write">
@@ -380,6 +392,15 @@ export default function ProductDetailPage() {
           setIsFormOpen(false);
           fetchProduct();
         }}
+      />
+      <LabelGenerator
+        open={isLabelModalOpen}
+        onOpenChange={setIsLabelModalOpen}
+        products={[{
+          ...product,
+          brand_name: product.brands?.name || '',
+          category_name: product.categories?.name || ''
+        }]}
       />
     </div>
   );

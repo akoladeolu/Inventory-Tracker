@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useCallback, useEffect } from "react";
-import { Plus, Search, Filter, Package, Camera, Download } from "lucide-react";
+import { Plus, Search, Filter, Package, Camera, Download, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useProducts } from "@/features/products/hooks/use-products";
 import { ProductForm } from "@/features/products/components/product-form";
+import { LabelGenerator } from "@/features/products/components/LabelGenerator";
 import { createClient } from "@/lib/supabase/client";
 import { PermissionGate } from "@/components/shared/permission-gate";
 import { toast } from "sonner";
@@ -39,6 +40,8 @@ export default function ProductsPage() {
 
   // Scanner state
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
+  const [labelProducts, setLabelProducts] = useState<any[]>([]);
 
   const openProductScanner = () => {
     setIsScannerOpen(true);
@@ -113,6 +116,21 @@ export default function ProductsPage() {
           <Button variant="outline" onClick={handleExportProductsPDF} className="gap-2">
             <Download className="h-4 w-4" />
             Export PDF
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (products.length === 0) {
+                toast.error("No products to generate labels for.");
+                return;
+              }
+              setLabelProducts(products);
+              setIsLabelModalOpen(true);
+            }}
+            className="gap-2 border-[#C8A348] text-[#C8A348] hover:bg-[#C8A348]/10"
+          >
+            <Printer className="h-4 w-4" />
+            Print Labels
           </Button>
           <PermissionGate permission="products:write">
             <Button onClick={() => setIsFormOpen(true)}>
@@ -309,6 +327,15 @@ export default function ProductsPage() {
         onOpenChange={setIsScannerOpen}
         onScanSuccess={handleProductScan}
         title="Scan Product SKU / Barcode"
+      />
+      <LabelGenerator
+        open={isLabelModalOpen}
+        onOpenChange={setIsLabelModalOpen}
+        products={labelProducts.map(p => ({
+          ...p,
+          brand_name: p.brands?.name || '',
+          category_name: p.categories?.name || ''
+        }))}
       />
     </div>
   );
