@@ -46,8 +46,8 @@ export function LabelGenerator({ open, onOpenChange, products }: LabelGeneratorP
         </DialogHeader>
 
         {/* Options Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-3 bg-[#F8F9FA] p-4 rounded-xl border border-[#E5E7EB]">
-          <div>
+        <div className="flex flex-wrap items-end gap-4 py-3 bg-[#F8F9FA] p-4 rounded-xl border border-[#E5E7EB]">
+          <div className="flex-1 min-w-[140px]">
             <Label className="text-xs">Barcode Format</Label>
             <Select value={format} onValueChange={(v: any) => setFormat(v)}>
               <SelectTrigger className="h-9 text-xs">
@@ -61,7 +61,7 @@ export function LabelGenerator({ open, onOpenChange, products }: LabelGeneratorP
             </Select>
           </div>
 
-          <div>
+          <div className="flex-1 min-w-[100px]">
             <Label className="text-xs">Copies per item</Label>
             <input
               type="number"
@@ -73,7 +73,7 @@ export function LabelGenerator({ open, onOpenChange, products }: LabelGeneratorP
             />
           </div>
 
-          <div>
+          <div className="flex-1 min-w-[120px]">
             <Label className="text-xs">Labels Per Row</Label>
             <Select value={String(labelsPerRow)} onValueChange={(v) => v && setLabelsPerRow(parseInt(v))}>
               <SelectTrigger className="h-9 text-xs">
@@ -87,10 +87,10 @@ export function LabelGenerator({ open, onOpenChange, products }: LabelGeneratorP
             </Select>
           </div>
 
-          <div className="flex flex-col justify-end gap-1.5 pb-0.5">
-            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Include Fields</span>
+          <div className="flex-shrink-0 flex flex-col justify-end gap-1.5 pb-0.5 min-w-[150px]">
+            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Include Fields</span>
             <div className="flex items-center gap-4">
-              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none whitespace-nowrap">
                 <input
                   type="checkbox"
                   checked={includePrice}
@@ -99,7 +99,7 @@ export function LabelGenerator({ open, onOpenChange, products }: LabelGeneratorP
                 />
                 Price
               </label>
-              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none whitespace-nowrap">
                 <input
                   type="checkbox"
                   checked={includeBrand}
