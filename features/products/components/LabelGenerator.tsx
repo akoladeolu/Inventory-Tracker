@@ -69,7 +69,7 @@ export function LabelGenerator({ open, onOpenChange, products }: LabelGeneratorP
               max={50}
               value={copies}
               onChange={(e) => setCopies(Math.max(1, parseInt(e.target.value) || 1))}
-              className="w-full h-9 px-3 border border-[#E5E7EB] rounded-md text-xs bg-white"
+              className="w-full h-9 px-3 border border-[#E5E7EB] rounded-md text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C8A348] focus:border-[#C8A348]"
             />
           </div>
 
@@ -87,23 +87,28 @@ export function LabelGenerator({ open, onOpenChange, products }: LabelGeneratorP
             </Select>
           </div>
 
-          <div className="flex items-center gap-4 pt-4">
-            <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-              <input
-                type="checkbox"
-                checked={includePrice}
-                onChange={(e) => setIncludePrice(e.target.checked)}
-              />
-              Price
-            </label>
-            <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-              <input
-                type="checkbox"
-                checked={includeBrand}
-                onChange={(e) => setIncludeBrand(e.target.checked)}
-              />
-              Brand
-            </label>
+          <div className="flex flex-col justify-end gap-1.5 pb-0.5">
+            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Include Fields</span>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={includePrice}
+                  onChange={(e) => setIncludePrice(e.target.checked)}
+                  className="rounded border-gray-300 text-[#C8A348] focus:ring-[#C8A348]"
+                />
+                Price
+              </label>
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={includeBrand}
+                  onChange={(e) => setIncludeBrand(e.target.checked)}
+                  className="rounded border-gray-300 text-[#C8A348] focus:ring-[#C8A348]"
+                />
+                Brand
+              </label>
+            </div>
           </div>
         </div>
 
@@ -134,7 +139,7 @@ export function LabelGenerator({ open, onOpenChange, products }: LabelGeneratorP
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          <Button onClick={handlePrint} className="bg-[#C8A348] hover:bg-[#B8933E] text-white">
+          <Button onClick={handlePrint} className="bg-[#C8A348] hover:bg-[#B8933E] text-white font-semibold">
             <Printer className="w-4 h-4 mr-2" />
             Print ({labelsToPrint.length} Labels)
           </Button>
@@ -155,7 +160,14 @@ export function LabelGenerator({ open, onOpenChange, products }: LabelGeneratorP
               top: 0;
               width: 100%;
               display: grid !important;
-              gap: 8px !important;
+              grid-template-columns: repeat(${labelsPerRow}, 50mm) !important;
+              gap: 4mm !important;
+              padding: 0 !important;
+              margin: 0 !important;
+            }
+            .print-area > div {
+              width: 50mm !important;
+              height: 30mm !important;
             }
           }
         `}</style>
